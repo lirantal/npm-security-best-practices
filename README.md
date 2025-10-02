@@ -31,6 +31,11 @@ Scope:
 
 ### npm Maintainer Security Best Practices
 
+- 9. [Enable 2FA for npm accounts](#9-enable-2fa-for-npm-accounts)
+- 10. [Publish with Provenance Attestations](#10-publish-with-provenance-attestations)
+- 11. [Publish with OIDC](#11-publish-with-oidc)
+- 12. [Reduce your package dependency tree](#12-reduce-your-package-dependency-tree)
+
 ---
 
 ## 1. Disable Post-Install Scripts
@@ -434,6 +439,113 @@ Even if `.env` files are not committed to version control, they remain vulnerabl
 
 ---
 
+## 9. Enable 2FA for npm accounts
+
+> [!WARNING]
+> npm accounts without two-factor authentication are vulnerable to credential theft and account takeover attacks, potentially allowing malicious actors to publish compromised versions of your packages.
+
+The eslint-scope[^6] incident in 2018 demonstrated the risks of compromised npm accounts when attackers published malicious code after stealing developer credentials. Two-factor authentication provides essential protection against such attacks by requiring additional verification beyond just username and password.
+
+> [!TIP]
+> **Security Best Practice**: Enable two-factor authentication on all npm accounts, especially for package maintainers, to prevent unauthorized access and malicious package publications.
+
+> [!NOTE]
+> **How to implement?**
+> 
+> Enable 2FA for authentication and publishing:
+> ```bash
+> $ npm profile enable-2fa auth-and-writes
+> ```
+>
+> For login and profile changes only:
+> ```bash
+> $ npm profile enable-2fa auth-only
+> ```
+
+---
+
+## 10. Publish with Provenance Attestations
+
+> [!WARNING]
+> Packages without provenance attestations cannot be verified for their build origin or authenticity, making it difficult for users to trust the integrity of your published packages in order to determine if they were built from the intended source code on GitHub or by malicious actors who may have compromised your npm account.
+
+Provenance statements provide cryptographic proof of where and how your packages were built, establishing a verifiable link between your source code and published packages. This transparency helps users verify package authenticity and detect tampering.
+
+> [!TIP]
+> **Security Best Practice**: Generate provenance attestations for your packages using supported CI/CD platforms to provide users with verifiable build information and enhance supply chain security.
+
+> [!NOTE]
+> **How to implement?**
+> 
+> Publish with provenance in GitHub Actions:
+> ```yaml
+> permissions:
+>   id-token: write
+> steps:
+>   - run: npm publish --provenance
+> ```
+>
+>
+> Note: publishing to npm with provenance requires npm CLI 9.5.0+ and GitHub Actions or GitLab CI/CD with cloud-hosted runners.
+
+---
+
+## 11. Publish with OIDC
+
+> [!WARNING]
+> Long-lived npm tokens can be compromised, accidentally exposed in logs, or provide persistent unauthorized access if stolen, posing significant security risks to your packages.
+
+Trusted publishing eliminates the need for long-lived npm tokens by using OpenID Connect (OIDC) authentication from your CI/CD environment. This approach uses short-lived, cryptographically-signed tokens that are specific to your workflow and cannot be extracted or reused. This npm package release method is tightly scoped to only allow publishing from your trusted CI environment (GitHub Actions or GitLab) and your specifically authorized workflow files.
+
+> [!TIP]
+> **Security Best Practice**: Configure trusted publishing for your packages to eliminate token-based authentication risks and automatically generate provenance attestations.
+
+> [!NOTE]
+> **How to implement?**
+> 
+> Configure trusted publisher on npmjs.com for your package, then update your CI/CD:
+> 
+> GitHub Actions:
+> ```yaml
+> permissions:
+>   id-token: write
+> steps:
+>   - run: npm publish
+> ```
+
+Trusted publishing supports GitHub Actions and GitLab CI/CD, and automatically generates provenance attestations which complies with OpenSSF standards.
+
+---
+
+## 12. Reduce your package dependency tree
+
+> [!WARNING]
+> Each dependency in your package increases the attack surface and potential for supply chain vulnerabilities, as users inherit all transitive dependencies when installing your package.
+
+Minimizing dependencies reduces security risks, improves performance, and decreases the likelihood of supply chain attacks. Fewer dependencies mean fewer potential points of failure and reduced exposure to malicious packages in the dependency tree.
+
+> [!TIP]
+> **Security Best Practice**: Design packages with minimal or zero dependencies by leveraging modern JavaScript features and standard library capabilities instead of external packages.
+
+> [!NOTE]
+> **How to implement?**
+> 
+> Replace common dependencies with native JavaScript:
+> ```javascript
+> // Instead of lodash
+> const unique = [...new Set(array)];
+> 
+> // Instead of axios for simple requests
+> const response = await fetch(url);
+> 
+> // Instead of utility libraries
+> const isEmpty = obj => Object.keys(obj).length === 0;
+> ```
+
+Modern JavaScript provides many built-in capabilities that previously required external libraries. Consider the maintenance burden, security implications, and bundle size impact before adding any dependency.
+
+---
+
 ## Author
 
 **npm Security Best Practices** © [Liran Tal](https://github.com/lirantal), Released under [Apache 2.0](./LICENSE) License.
@@ -443,3 +555,4 @@ Even if `.env` files are not committed to version control, they remain vulnerabl
 [^3]: [Event-Stream Incident Post-Mortem](https://snyk.io/blog/a-post-mortem-of-the-malicious-event-stream-backdoor/)
 [^4]: [Colors Package Incident](https://snyk.io/blog/open-source-npm-packages-colors-faker/)
 [^5]: [Node-ipc Incident](https://snyk.io/blog/peacenotwar-malicious-npm-node-ipc-package-vulnerability/)
+[^6]: [Eslint-scope Incident](https://eslint.org/blog/2018/07/postmortem-for-malicious-package-publishes/)
