@@ -1,6 +1,23 @@
-# Awesome npm Security Best Practices ![Awesome](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg)
+<p align="center">
 
-A curated and practical list of security best practice for using npm packages.
+  <h1 align="center">
+    Awesome npm Security Best Practices
+  </h1>
+  <p align="center">
+    A curated and practical list of security best practice for using npm packages.
+  </p>
+
+<!-- Shields -->
+<p align="center">
+ <img src="https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg" alt="Awesome" />
+ <img src="https://badgen.net/badge/Last%20Update/Oct%2025/green" />
+ <a href="https://www.github.com/lirantal/nodejs-cli-apps-best-practices" target="_blank">
+  <img src="https://badgen.net/badge/npm/Security Best Practices/purple" alt="npm Security Best Practices"/>
+ </a>
+</p>
+<!-->
+
+</p>
 
 **Scope**:
 - safe-by-default npm package manager command-line options
