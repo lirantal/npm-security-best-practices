@@ -22,6 +22,7 @@ Scope:
 - 3 [Use npq for hardening package installs](#3-use-npq-for-hardening-package-installs)
 - 4 [Prevent npm lockfile injection](#4-prevent-npm-lockfile-injection)
 - 5 [Use npm ci](#5-use-npm-ci)
+- 6 [Avoid blind npm package upgrades](#6-avoid-blind-npm-package-upgrades)
 
 ---
 
@@ -308,6 +309,33 @@ Ensure proper lockfile management across your development workflow:
 
 ---
 
+## 6. Avoid blind npm package upgrades
+
+> [!WARNING]
+> Blindly upgrading all dependencies to their latest versions can expose your application to security vulnerabilities, dependency confusion attacks, and malicious packages released from compromised accounts.
+
+Some developers automatically upgrade all dependencies to the latest versions as part of continuous integration processes or local development practices, aiming to ensure forward compatibility or stay at "bleeding edge". Blind dependency upgrades can pull in malicious packages from compromised accounts, introduce functional bugs, or expose applications to supply chain attacks like the colors[^4] and node-ipc[^5] security incidents.
+
+> [!TIP]
+> **Security Best Practice**: Use automated dependency management tools with security policies and manual review processes instead of blindly upgrading all packages to their latest versions.
+
+> [!CAUTION]
+> **Anti-pattern**:
+> Avoid dependency upgrades commands without review:
+> ```bash
+> npm update
+> npx npm-check-updates -u
+> ```
+
+> [!NOTE]
+> **How to implement?**
+> 
+> 1. Use controlled dependency management: `npx npm-check-updates --interactive`
+> 2. Use [Snyk Automated Dependency Update PRs](https://docs.snyk.io/scan-with-snyk/pull-requests/snyk-pull-or-merge-requests/upgrade-dependencies-with-automatic-prs-upgrade-prs/upgrade-open-source-dependencies-with-automatic-prs)
+> 3. Use [Dependabot Dependency Update PRs](https://docs.github.com/en/code-security/getting-started/dependabot-quickstart-guide)
+
+---
+
 ## Author
 
 **npm Security Best Practices** © [Liran Tal](https://github.com/lirantal), Released under [Apache 2.0](./LICENSE) License.
@@ -315,3 +343,5 @@ Ensure proper lockfile management across your development workflow:
 [^1]: [Shai-Hulud: A Large-Scale Backdoor in the npm Ecosystem](https://snyk.io/blog/embedded-malicious-code-in-tinycolor-and-ngx-bootstrap-releases-on-npm/)
 [^2]: [Malicious Code Found in Popular Nx Dev Tool](https://snyk.io/blog/weaponizing-ai-coding-agents-for-malware-in-the-nx-malicious-package/)
 [^3]: [Event-Stream Incident Post-Mortem](https://snyk.io/blog/a-post-mortem-of-the-malicious-event-stream-backdoor/)
+[^4]: [Colors Package Incident](https://snyk.io/blog/open-source-npm-packages-colors-faker/)
+[^5]: [Node-ipc Incident](https://snyk.io/blog/peacenotwar-malicious-npm-node-ipc-package-vulnerability/)
