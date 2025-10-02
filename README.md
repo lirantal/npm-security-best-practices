@@ -21,7 +21,8 @@ Scope:
   - 2.2. [pnpm minimumReleaseAge cooldown](#22-pnpm-minimumreleaseage-cooldown)
   - 2.3. [Snyk automated dependency upgrades with cooldown](#23-snyk-automated-dependency-upgrades-with-cooldown)
 - 3 [Use npq for hardening package installs](#3-use-npq-for-hardening-package-installs)
-- 4 [Use npm ci](#4-use-npm-ci)
+- 4 [Prevent npm lockfile injection](#4-prevent-npm-lockfile-injection)
+- 5 [Use npm ci](#5-use-npm-ci)
 
 ---
 
@@ -182,6 +183,66 @@ Disable specific security marshalls when needed:
 ```bash
 MARSHALL_DISABLE_SNYK=1 npq install express
 ```
+
+---
+
+## 4. Prevent npm lockfile injection
+
+> [!WARNING]
+> Malicious actors can inject compromised packages into your lockfiles through pull requests, potentially compromising your entire application during the next installation.
+
+In September 2019, Liran Tal disclosed security research about inherent security risks with package lockfiles in developer workflows. Both JavaScript package managers, Yarn and npm, were found to be susceptible to lockfile injection attacks.
+
+The security threat occurs when malicious actors gain the ability to contribute source code changes via mechanisms such as pull requests. If they update a lockfile such as `package-lock.json` or `yarn.lock` to include a new npm package dependency, or modify the source URL of an existing package, then any invocation of package install commands would fetch the malicious code.
+
+Furthermore, JavaScript package managers allow users to install packages from unconventional sources, such as GitHub gists or directly from source code repositories. Attackers can update the lockfile to specify a new source location (in the `resolved` key) that they control, and set the SHA512 integrity value accordingly to avoid detection.
+
+> [!TIP]
+> **Security Best Practice**: Use [lockfile-lint](https://www.npmjs.com/package/lockfile-lint) to validate that your lockfiles adhere to security policies, ensuring that package sources come from trusted registries and that no malicious modifications have been introduced.
+
+> [!NOTE]
+> **How to implement?**
+> 
+> Install lockfile-lint to validate your lockfiles:
+> ```bash
+> npm install --save-dev lockfile-lint
+> ```
+>
+> Validate `package-lock.json` with multiple allowed sources:
+> ```bash
+> npx lockfile-lint --path package-lock.json --type npm --allowed-hosts npm yarn --validate-https
+> ```
+
+### Lockfile-lint validation options
+
+The `lockfile-lint` CLI provides comprehensive validation to ensure lockfile integrity:
+
+- **Host validation**: Restrict packages to trusted registry hosts (npm, yarn, verdaccio)
+- **HTTPS enforcement**: Ensure all package sources use secure HTTPS protocol
+- **Scheme validation**: Control allowed URI schemes (https:, git+https:, git+ssh:)
+- **Package name validation**: Verify resolved URLs match declared package names
+- **Integrity validation**: Ensure integrity hashes use secure SHA-512 algorithm
+
+### CI/CD integration
+
+Integrate lockfile-lint into your development workflow:
+
+```bash
+# In `package.json` scripts
+{
+  "scripts": {
+    "lint:lockfile": "lockfile-lint --path package-lock.json --type npm --allowed-hosts npm --validate-https",
+    "preinstall": "npm run lint:lockfile"
+  }
+}
+```
+
+### 📦 pnpm lockfile injection security
+
+pnpm is not susceptible to the same lockfile injection vulnerabilities as npm and yarn because:
+- It doesn't maintain tarball sources that can be maliciously modified
+- It won't install packages listed in the lockfile that aren't declared in `package.json`
+- The `pnpm-lock.yaml` format is more resistant to injection attacks
 
 ---
 
