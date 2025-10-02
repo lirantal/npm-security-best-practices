@@ -14,10 +14,10 @@ Scope:
 ## Table of Contents
 
 - 1 [Disable Post-Install Scripts](#1-disable-post-install-scripts)
-  - 1.1. [📦 pnpm disable post-install scripts](#11--pnpm-disable-post-install-scripts)
-  - 1.2. [📦 Bun disable post-install scripts](#12--bun-disable-post-install-scripts)
+  - 1.1. [pnpm disable post-install scripts](#11-pnpm-disable-post-install-scripts)
+  - 1.2. [Bun disable post-install scripts](#12-bun-disable-post-install-scripts)
 - 2 [Install with Cooldown](#2-install-with-cooldown)
-  - 2.2. [pnpm minimumReleaseAge cooldown](#22--pnpm-minimumreleaseage-cooldown)
+  - 2.2. [pnpm minimumReleaseAge cooldown](#22-pnpm-minimumreleaseage-cooldown)
   - 2.2. [Snyk automated dependency upgrades with cooldown](#23-snyk-automated-dependency-upgrades-with-cooldown)
 - 3 [Use npq for hardening package installs](#3-use-npq-for-hardening-package-installs)
 - 4 [Prevent npm lockfile injection](#4-prevent-npm-lockfile-injection)
@@ -63,11 +63,11 @@ By disabling post-install scripts, you can mitigate the risk of such attacks by 
 > $ npm install --ignore-scripts <package-name>
 > ```
 
-### 1.1. 📦 pnpm disable post-install scripts
+### 1.1. pnpm disable post-install scripts
 
 Beginning with version 10.0 [pnpm disables postinstall scripts by default](https://pnpm.io/supply-chain-security). pnpm allows an "escape hatch" to re-enable postinstall scripts or set an explicit allow-list of packages that are allowed to run postinstall scripts.
 
-### 1.2. 📦 Bun disable post-install scripts
+### 1.2. Bun disable post-install scripts
 
 [Bun disables postinstall scripts by default](https://bun.com/docs/install/lifecycle) and maintains its own internal allow-list of packages that are allowed to run postinstall scripts. Bun allows an "escape hatch" to allow postinstall scripts for specific [trusted packages](https://bun.com/docs/install/lifecycle#trusteddependencies) via a `trustedDependencies` field in `package.json`.
 
@@ -98,7 +98,7 @@ Attackers build on the npm versioning and publishing model which prefers and res
 >
 > Note: This approach requires manual date management and isn't ideal for automated workflows due to hardcoded dates.
 
-### 2.1. 📦 pnpm `minimumReleaseAge` cooldown
+### 2.1. pnpm `minimumReleaseAge` cooldown
 
 Configure pnpm to delay package installations by setting a minimum release age in your repository's pnpm configuration file `pnpm-workspace.yaml`:
 
@@ -169,7 +169,7 @@ npq performs comprehensive security audits using "marshalls" - specialized secur
 - **Deprecation status**: Alerts for deprecated packages
 - **Maintainer domain validation**: Checks for expired domains in maintainer emails
 
-### 📦 pnpm and Bun compatibility
+### pnpm and Bun compatibility
 
 npq works with different package managers through environment variables:
 
@@ -248,7 +248,7 @@ Integrate lockfile-lint into your development workflow, such as the following `l
 }
 ```
 
-### 📦 pnpm lockfile injection security
+### pnpm lockfile injection security
 
 pnpm is not susceptible to the same lockfile injection vulnerabilities as npm and yarn because:
 - It doesn't maintain tarball sources that can be maliciously modified
@@ -283,7 +283,7 @@ Package managers like npm and yarn compensate for inconsistencies between `packa
 >
 > Ensure lockfiles are committed and up-to-date in your repository.
 
-### 📦 Yarn, Bun, Deno and pnpm Package manager deterministic installations
+### Yarn, Bun, Deno and pnpm Package manager deterministic installations
 
 Different package managers provide specific commands for enforcing lockfile adherence:
 
