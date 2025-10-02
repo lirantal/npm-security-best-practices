@@ -24,6 +24,13 @@ Scope:
 - 5 [Use npm ci](#5-use-npm-ci)
 - 6 [Avoid blind npm package upgrades](#6-avoid-blind-npm-package-upgrades)
 
+### Secure Local Development Best Practices
+
+- 7. [No plaintext secrets in .env files](#7-no-plaintext-secrets-in-dotenv-files)
+- 8. [Work in Dev Containers](#8-work-in-dev-containers)
+
+### npm Maintainer Security Best Practices
+
 ---
 
 ## 1. Disable Post-Install Scripts
@@ -43,12 +50,12 @@ By disabling post-install scripts, you can mitigate the risk of such attacks by 
 > 
 > It is *highly recommended* at a global configuration to set npm's `ignore-scripts` configuration to `true` to disable all post-install scripts for all projects on your machine:
 > ```bash
-> npm config set ignore-scripts true
+> $ npm config set ignore-scripts true
 > ```
 >
 > Or disable npm's post-install scripts when performing ad-hoc package install using the command line:
 > ```bash
-> npm install --ignore-scripts <package-name>
+> $ npm install --ignore-scripts <package-name>
 > ```
 
 ### 1.1. 📦 pnpm disable post-install scripts
@@ -76,12 +83,12 @@ Attackers build on the npm versioning and publishing model which prefers and res
 > 
 > Use npm's `--before` flag to install packages only if they were published before a specific date:
 > ```bash
-> npm install express --before=2025-01-01
+> $ npm install express --before=2025-01-01
 > ```
 >
 > Or use shell command evaluation to make it dynamic with a 7-day cooldown:
 > ```bash
-> npm install express --before="$(date -v -7d)"
+> $ npm install express --before="$(date -v -7d)"
 > ```
 >
 > Note: This approach requires manual date management and isn't ideal for automated workflows due to hardcoded dates.
@@ -122,23 +129,23 @@ Installing a new ad-hoc npm package can expose your system to supply chain attac
 > 
 > Install `npq` globally to audit packages before installation:
 > ```bash
-> npm install -g npq
+> $ npm install -g npq
 > ```
 >
 > Use npq instead of npm for package installations:
 > ```bash
-> npq install express
+> $ npq install express
 > ```
 >
 > For seamless integration, alias npm to use npq automatically:
 > ```bash
-> alias npm='npq-hero'
+> $ alias npm='npq-hero'
 > ```
 > Note: installing npq provides both `npq` and `npq-hero` commands.
 > or add it to your shell profile for persistence:
 > ```bash
-> echo "alias npm='npq-hero'" >> ~/.zshrc  # or ~/.bashrc
-> source ~/.zshrc
+> $ echo "alias npm='npq-hero'" >> ~/.zshrc  # or ~/.bashrc
+> $ source ~/.zshrc
 > ```
 
 ### What npq validates
@@ -176,12 +183,12 @@ alias pnpm="NPQ_PKG_MGR=pnpm npq-hero"
 
 Run security checks without installing packages:
 ```bash
-npq install express --dry-run
+$ npq install express --dry-run
 ```
 
 Disable specific security marshalls when needed:
 ```bash
-MARSHALL_DISABLE_SNYK=1 npq install express
+$ MARSHALL_DISABLE_SNYK=1 npq install express
 ```
 
 ---
@@ -225,10 +232,9 @@ The `lockfile-lint` CLI provides comprehensive validation to ensure lockfile int
 
 ### CI/CD integration
 
-Integrate lockfile-lint into your development workflow:
+Integrate lockfile-lint into your development workflow, such as the following `lint:lockfile` script in `package.json` that runs before every install:
 
 ```bash
-# In `package.json` scripts
 {
   "scripts": {
     "lint:lockfile": "lockfile-lint --path package-lock.json --type npm --allowed-hosts npm --validate-https",
@@ -261,13 +267,13 @@ Package managers like npm and yarn compensate for inconsistencies between `packa
 > 
 > Use `npm ci` instead of `npm install` for deterministic installations:
 > ```bash
-> npm ci
+> $ npm ci
 > ```
 >
 > For automated environments like CI/CD, always use the deterministic installation command:
 > ```bash
 > # In your CI/CD pipeline
-> npm ci --only=production
+> $ npm ci --only=production
 > ```
 >
 > Ensure lockfiles are committed and up-to-date in your repository.
@@ -278,22 +284,22 @@ Different package managers provide specific commands for enforcing lockfile adhe
 
 **yarn**: Use frozen lockfile mode:
 ```bash
-yarn install --frozen-lockfile
+$ yarn install --frozen-lockfile
 ```
 
 **pnpm**: Use frozen lockfile installation:
 ```bash
-pnpm install --frozen-lockfile
+$ pnpm install --frozen-lockfile
 ```
 
 **Bun**: Use frozen lockfile mode:
 ```bash
-bun install --frozen-lockfile
+$ bun install --frozen-lockfile
 ```
 
 **Deno**: Use frozen installation:
 ```bash
-deno install --frozen
+$ deno install --frozen
 ```
 
 ### Lockfile management best practices
@@ -323,8 +329,8 @@ Some developers automatically upgrade all dependencies to the latest versions as
 > **Anti-pattern**:
 > Avoid dependency upgrades commands without review:
 > ```bash
-> npm update
-> npx npm-check-updates -u
+> $ npm update
+> $ npx npm-check-updates -u
 > ```
 
 > [!NOTE]
@@ -333,6 +339,51 @@ Some developers automatically upgrade all dependencies to the latest versions as
 > 1. Use controlled dependency management: `npx npm-check-updates --interactive`
 > 2. Use [Snyk Automated Dependency Update PRs](https://docs.snyk.io/scan-with-snyk/pull-requests/snyk-pull-or-merge-requests/upgrade-dependencies-with-automatic-prs-upgrade-prs/upgrade-open-source-dependencies-with-automatic-prs)
 > 3. Use [Dependabot Dependency Update PRs](https://docs.github.com/en/code-security/getting-started/dependabot-quickstart-guide)
+
+---
+
+## 7. No plaintext secrets in .env files
+
+> [!WARNING]
+> Storing secrets in plaintext environment variables or `.env` files creates a significant security risk, making sensitive data easily accessible to attackers who successfully launch supply chain attacks or gain access to your system.
+
+Environment variables and `.env` files are commonly used to store configuration and sensitive data like API keys, database passwords, and tokens. However, these secrets are stored in plaintext and can be easily exfiltrated by malicious npm packages, compromised dependencies, or attackers who gain access to your development environment.
+
+Even if `.env` files are not committed to version control, they remain vulnerable targets during supply chain attacks where malicious code can read process environment variables or scan the filesystem to locate known configuration files containing secrets.
+
+> [!TIP]
+> **Security Best Practice**: Use secrets management solutions that only store references in environment variable data and require additional authentication (like Touch ID on macOS) to access the actual secret values just-in-time.
+
+> [!CAUTION]
+> **Anti-pattern**:
+> Avoid storing plaintext secrets in `.env` files:
+> ```bash
+> DATABASE_PASSWORD=my-secret-password
+> API_KEY=sk-1234567890abcdef
+> ```
+
+> [!NOTE]
+> **How to implement?**
+>
+> Step 1: Use secret references in `.env` files:
+> ```bash
+> DATABASE_PASSWORD=op://vault/database/password
+> API_KEY=infisical://project/env/api-key
+> ```
+> Step 2: Use the secret manager CLI to inject secrets at runtime:
+> ```bash
+> $ op run -- npm start
+>
+> # or more verbosely: 
+>
+> $ op run --env-file="./.env" -- node --env-file="./.env" server.js
+> ```
+
+### Follow-up secure secrets resources
+
+- Liran Tal's [Do Not Use Secrets in Environment Variables](https://www.nodejs-security.com/blog/do-not-use-secrets-in-environment-variables-and-here-is-how-to-do-it-better)
+- 1Password's [Secrets Automation with 1Password CLI](https://developer.1password.com/docs/cli/get-started/)
+- Infisical's [Getting Started with Infisical CLI](https://infisical.com/blog/stop-using-env-files)
 
 ---
 
