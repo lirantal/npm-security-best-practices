@@ -24,14 +24,16 @@ Scope:
 
 ## 1. Disable Post-Install Scripts
 
-> [!WARNING] Why?
+> [!WARNING]
 > Post-install scripts are a common and recurring attack vector for supply chain attacks.
 >
 
-> [!TIP] Security Best Practice
-> Configure npm to disable lifecycle scripts when installing packages so any npm package, direct or indirect, cannot execute arbitrary code or commands on your system during installation.
+> [!TIP]
+> **Security Best Practice**: Configure npm to disable lifecycle scripts when installing packages so any npm package, direct or indirect, cannot execute arbitrary code or commands on your system during installation.
 
-> [!NOTE] How?
+> [!NOTE]
+> **How to implement?**
+> 
 > Disable npm's post-install scripts when performing ad-hoc package install using the command line:
 > ```bash
 > npm install --ignore-scripts <package-name>
