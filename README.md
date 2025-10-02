@@ -245,6 +245,69 @@ pnpm is not susceptible to the same lockfile injection vulnerabilities as npm an
 
 ---
 
+## 5. Use npm ci
+
+> [!WARNING]
+> Using `npm install` in production can lead to inconsistent installations when lockfiles and package.json files are out of sync, potentially introducing unintended package versions and security vulnerabilities that are resolved during install-time.
+
+Package managers like npm and yarn compensate for inconsistencies between `package.json` and lockfiles by installing different versions than those recorded in the lockfile. This behavior can be hazardous for build and production environments as they could pull in unintended package versions, rendering the entire benefit of lockfile determinism futile. Developers should also favor deterministic package resolution in their local development workflows.
+
+> [!TIP]
+> **Security Best Practice**: Use deterministic installation command `npm ci` that enforce strict lockfile adherence, ensuring that only the exact versions specified in the lockfile are installed, and abort installation if inconsistencies are detected.
+
+> [!NOTE]
+> **How to implement?**
+> 
+> Use `npm ci` instead of `npm install` for deterministic installations:
+> ```bash
+> npm ci
+> ```
+>
+> For automated environments like CI/CD, always use the deterministic installation command:
+> ```bash
+> # In your CI/CD pipeline
+> npm ci --only=production
+> ```
+>
+> Ensure lockfiles are committed and up-to-date in your repository.
+
+### 📦 Yarn, Bun, Deno and pnpm Package manager deterministic installations
+
+Different package managers provide specific commands for enforcing lockfile adherence:
+
+**yarn**: Use frozen lockfile mode:
+```bash
+yarn install --frozen-lockfile
+```
+
+**pnpm**: Use frozen lockfile installation:
+```bash
+pnpm install --frozen-lockfile
+```
+
+**Bun**: Use frozen lockfile mode:
+```bash
+bun install --frozen-lockfile
+```
+
+**Deno**: Use frozen installation:
+```bash
+deno install --frozen
+```
+
+### Lockfile management best practices
+
+Ensure proper lockfile management across your development workflow:
+
+**Commit all lockfiles to version control:**
+- `package-lock.json` (npm)
+- `pnpm-lock.yaml` (pnpm)  
+- `yarn.lock` (yarn)
+- `bun.lock` (Bun)
+- `deno.lock` (Deno)
+
+---
+
 ## Author
 
 **npm Security Best Practices** © [Liran Tal](https://github.com/lirantal), Released under [Apache 2.0](./LICENSE) License.
