@@ -387,6 +387,53 @@ Even if `.env` files are not committed to version control, they remain vulnerabl
 
 ---
 
+## 8. Work in Dev Containers
+
+> [!WARNING]
+> Running npm packages directly on your host development machine exposes your entire system to potential malware, allowing malicious packages to access sensitive files, spawning agentic coding CLIs, agent environment variables, and system resources.
+
+[Development containers](https://code.visualstudio.com/docs/devcontainers/containers) (dev containers) provide an isolated, sandboxed environment that limits the blast radius of supply chain attacks. When malicious npm packages execute during installation or runtime, they are confined to the container environment rather than having access to your entire host system where you may have running other projects, sensitive files, or personal data.
+
+> [!TIP]
+> **Security Best Practice**: Use dev containers to isolate your project's local development workflows from your host system so that npm package execution and other project development practices are limiting the potential impact of supply chain attacks and malicious package behavior.
+
+> [!NOTE]
+> **How to implement?**
+> 
+> Step 1. Create a `.devcontainer/devcontainer.json` file in your project:
+> ```json
+> {
+>   "name": "Node.js Dev Container",
+>   "image": "mcr.microsoft.com/devcontainers/javascript-node:18",
+>   "features": {
+>     "ghcr.io/devcontainers/features/1password:1": {}
+>   },
+>   "postCreateCommand": "npm ci"
+> }
+> ```
+>
+> Step 2. Use VS Code to open your project in the dev container
+
+### Follow-up resources
+
+- Step-by-step guide on [Setting up Dev Containers and 1Password Secrets for Node.js Local Development](https://www.nodejs-security.com/blog/mitigate-supply-chain-security-with-devcontainers-and-1password-for-nodejs-local-development)
+- Consider further hardening of the Dev Container:
+```jsonc
+  "runArgs": [
+    "--security-opt=no-new-privileges:true",
+    "--cap-drop=ALL",
+    "--cap-add=CHOWN",
+    "--cap-add=SETUID",
+    "--cap-add=SETGID"
+  ],
+  "containerEnv": {
+    "NODE_OPTIONS": "--disable-proto=delete"
+  },
+```
+- Consider a Custom Dockerfile for enhanced security
+
+---
+
 ## Author
 
 **npm Security Best Practices** © [Liran Tal](https://github.com/lirantal), Released under [Apache 2.0](./LICENSE) License.
