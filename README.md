@@ -7,6 +7,7 @@ Scope:
 - hardening against supply chain attacks
 - deterministic and secure dependency resolution
 - security vulnerabilities scanning and package health signals
+- instructions for the `pnpm` and `bun` package managers where applicable
 
 ---
 
@@ -35,14 +36,25 @@ Recent attacks like Shai-Hulud[^1], Nx[^2] and long-standing attacks like event-
 > [!NOTE]
 > **How to implement?**
 > 
-> Disable npm's post-install scripts when performing ad-hoc package install using the command line:
-> ```bash
-> npm install --ignore-scripts <package-name>
-> ```
-> Or, *highly recommended* at a global configuration, set npm's `ignore-scripts` configuration to `true` to disable all post-install scripts.
+> It is *highly recommended* at a global configuration to set npm's `ignore-scripts` configuration to `true` to disable all post-install scripts for all projects on your machine:
 > ```bash
 > npm config set ignore-scripts true
 > ```
+>
+> Or disable npm's post-install scripts when performing ad-hoc package install using the command line:
+> ```bash
+> npm install --ignore-scripts <package-name>
+> ```
+
+### 📦 pnpm disable post-install scripts
+
+Beginning with version 10.0 [pnpm disables postinstall scripts by default](https://pnpm.io/supply-chain-security). pnpm allows an "escape hatch" to re-enable postinstall scripts or set an explicit allow-list of packages that are allowed to run postinstall scripts.
+
+### 📦 Bun disable post-install scripts
+
+[Bun disables postinstall scripts by default](https://bun.com/docs/install/lifecycle) and maintains its own internal allow-list of packages that are allowed to run postinstall scripts. Bun allows an "escape hatch" to allow postinstall scripts for specific [trusted packages](https://bun.com/docs/install/lifecycle#trusteddependencies) via a `trustedDependencies` field in `package.json`.
+
+---
 
 ## Author
 
