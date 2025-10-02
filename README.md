@@ -26,15 +26,15 @@ Scope:
 
 ### Secure Local Development Best Practices
 
-- 7. [No plaintext secrets in .env files](#7-no-plaintext-secrets-in-dotenv-files)
-- 8. [Work in Dev Containers](#8-work-in-dev-containers)
+- 7 [No plaintext secrets in .env files](#7-no-plaintext-secrets-in-dotenv-files)
+- 8 [Work in Dev Containers](#8-work-in-dev-containers)
 
 ### npm Maintainer Security Best Practices
 
-- 9. [Enable 2FA for npm accounts](#9-enable-2fa-for-npm-accounts)
-- 10. [Publish with Provenance Attestations](#10-publish-with-provenance-attestations)
-- 11. [Publish with OIDC](#11-publish-with-oidc)
-- 12. [Reduce your package dependency tree](#12-reduce-your-package-dependency-tree)
+- 9 [Enable 2FA for npm accounts](#9-enable-2fa-for-npm-accounts)
+- 10 [Publish with Provenance Attestations](#10-publish-with-provenance-attestations)
+- 11 [Publish with OIDC](#11-publish-with-oidc)
+- 12 [Reduce your package dependency tree](#12-reduce-your-package-dependency-tree)
 
 ---
 
