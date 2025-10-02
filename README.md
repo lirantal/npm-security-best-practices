@@ -104,6 +104,87 @@ This configuration prevents pnpm from installing any package version that was pu
 
 ---
 
+## 3. Use npq for hardening package installs
+
+> [!WARNING]
+> You should never install npm packages without properly auditing their package health and security signals.
+
+How do you know if an npm package is safe to install? maybe it was just published yesterday? maybe you have an accidental typo in the package name and land on a similarly named malicious package? maybe the package has known vulnerabilities or malicious post-install scripts? Malicious packages can execute arbitrary code during installation, exfiltrate sensitive data, or introduce vulnerabilities into your system without your knowledge.
+
+Installing a new ad-hoc npm package can expose your system to supply chain attacks. Many attacks compromised trusted and popular npm packages, exploit typosquatting, or introduce malicious code in pre/post-install scripts that execute during the installation process.
+
+> [!TIP]
+> **Security Best Practice**: Use [npq](https://github.com/lirantal/npq) as a proactive security control that audits npm packages before installation, providing comprehensive security checks, package health signals, and interactive warnings for potentially dangerous or high-risk packages.
+
+> [!NOTE]
+> **How to implement?**
+> 
+> Install `npq` globally to audit packages before installation:
+> ```bash
+> npm install -g npq
+> ```
+>
+> Use npq instead of npm for package installations:
+> ```bash
+> npq install express
+> ```
+>
+> For seamless integration, alias npm to use npq automatically:
+> ```bash
+> alias npm='npq-hero'
+> ```
+> Note: installing npq provides both `npq` and `npq-hero` commands.
+> or add it to your shell profile for persistence:
+> ```bash
+> echo "alias npm='npq-hero'" >> ~/.zshrc  # or ~/.bashrc
+> source ~/.zshrc
+> ```
+
+### What npq validates
+
+npq performs comprehensive security audits using "marshalls" - specialized security validators that check for:
+
+- **Vulnerability scanning**: Consults Snyk's database for known CVE vulnerabilities
+- **Package age analysis**: Flags packages less than 22 days old (new package detection) 
+- **Typosquatting detection**: Identifies packages with names similar to popular packages
+- **Registry signature verification**: Validates npm registry signatures using published keys
+- **Provenance attestation**: Verifies package build provenance metadata
+- **Pre/post-install scripts**: Warns about potentially malicious installation scripts
+- **Package health indicators**: Checks for README, LICENSE, repository URL, and download metrics
+- **Version maturity**: Flags package versions published less than 7 days ago
+- **Binary introduction**: Warns when new command-line binaries are added
+- **Deprecation status**: Alerts for deprecated packages
+- **Maintainer domain validation**: Checks for expired domains in maintainer emails
+
+### 📦 pnpm and Bun compatibility
+
+npq works with different package managers through environment variables:
+
+```bash
+# Use with pnpm
+NPQ_PKG_MGR=pnpm npq install fastify
+
+# Use with Bun  
+NPQ_PKG_MGR=bun npq install fastify
+
+# Set permanent aliases
+alias pnpm="NPQ_PKG_MGR=pnpm npq-hero"
+```
+
+### Advanced usage options
+
+Run security checks without installing packages:
+```bash
+npq install express --dry-run
+```
+
+Disable specific security marshalls when needed:
+```bash
+MARSHALL_DISABLE_SNYK=1 npq install express
+```
+
+---
+
 ## Author
 
 **npm Security Best Practices** © [Liran Tal](https://github.com/lirantal), Released under [Apache 2.0](./LICENSE) License.
