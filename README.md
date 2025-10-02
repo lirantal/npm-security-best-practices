@@ -2,12 +2,14 @@
 
 A curated and practical list of security best practice for using npm packages.
 
-Scope:
+**Scope**:
 - safe-by-default npm package manager command-line options
 - hardening against supply chain attacks
 - deterministic and secure dependency resolution
 - security vulnerabilities scanning and package health signals
 - instructions for the `pnpm` and `bun` package managers where applicable
+
+**Context**: Shai-Hulud, Nx and other incidents are a growing concern of supply chain security attacks and compromised npm packages. Follow these developer security best practices around npm, package maintenance and secure local development to mitigate security risks.
 
 ---
 
