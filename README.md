@@ -13,6 +13,8 @@ Scope:
 
 ## Table of Contents
 
+**npm Security Best Practices:**
+
 - 1 [Disable Post-Install Scripts](#1-disable-post-install-scripts)
   - 1.1. [pnpm disable post-install scripts](#11-pnpm-disable-post-install-scripts)
   - 1.2. [Bun disable post-install scripts](#12-bun-disable-post-install-scripts)
@@ -24,12 +26,12 @@ Scope:
 - 5 [Use npm ci](#5-use-npm-ci)
 - 6 [Avoid blind npm package upgrades](#6-avoid-blind-npm-package-upgrades)
 
-### Secure Local Development Best Practices
+**Secure Local Development Best Practices:**
 
 - 7 [No plaintext secrets in .env files](#7-no-plaintext-secrets-in-dotenv-files)
 - 8 [Work in Dev Containers](#8-work-in-dev-containers)
 
-### npm Maintainer Security Best Practices
+**npm Maintainer Security Best Practices:**
 
 - 9 [Enable 2FA for npm accounts](#9-enable-2fa-for-npm-accounts)
 - 10 [Publish with Provenance Attestations](#10-publish-with-provenance-attestations)
