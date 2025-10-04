@@ -10,6 +10,7 @@
 <!-- Shields -->
 <p align="center">
  <img src="https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg" alt="Awesome" />
+ <img src="https://badgen.net/badge/total%20best%20practices/12/blue" alt="npm security best practices" />
  <img src="https://badgen.net/badge/Last%20Update/Oct%2025/green" />
  <a href="https://www.github.com/lirantal/nodejs-cli-apps-best-practices" target="_blank">
   <img src="https://badgen.net/badge/npm/Security Best Practices/purple" alt="npm Security Best Practices"/>
@@ -38,8 +39,8 @@
   - 1.1. [pnpm disable post-install scripts](#11-pnpm-disable-post-install-scripts)
   - 1.2. [Bun disable post-install scripts](#12-bun-disable-post-install-scripts)
 - 2 [Install with Cooldown](#2-install-with-cooldown)
-  - 2.2. [pnpm minimumReleaseAge cooldown](#22-pnpm-minimumreleaseage-cooldown)
-  - 2.2. [Snyk automated dependency upgrades with cooldown](#23-snyk-automated-dependency-upgrades-with-cooldown)
+  - 2.1. [pnpm minimumReleaseAge cooldown](#21-pnpm-minimumreleaseage-cooldown)
+  - 2.2. [Snyk automated dependency upgrades with cooldown](#22-snyk-automated-dependency-upgrades-with-cooldown)
 - 3 [Use npq for hardening package installs](#3-use-npq-for-hardening-package-installs)
 - 4 [Prevent npm lockfile injection](#4-prevent-npm-lockfile-injection)
 - 5 [Use npm ci](#5-use-npm-ci)
@@ -47,7 +48,7 @@
 
 **Secure Local Development Best Practices:**
 
-- 7 [No plaintext secrets in .env files](#7-no-plaintext-secrets-in-dotenv-files)
+- 7 [No plaintext secrets in .env files](#7-no-plaintext-secrets-in-env-files)
 - 8 [Work in Dev Containers](#8-work-in-dev-containers)
 
 **npm Maintainer Security Best Practices:**
@@ -119,7 +120,7 @@ Attackers build on the npm versioning and publishing model which prefers and res
 >
 > Note: This approach requires manual date management and isn't ideal for automated workflows due to hardcoded dates.
 
-### 2.1. pnpm `minimumReleaseAge` cooldown
+### 2.1. pnpm minimumReleaseAge cooldown
 
 Configure pnpm to delay package installations by setting a minimum release age in your repository's pnpm configuration file `pnpm-workspace.yaml`:
 
