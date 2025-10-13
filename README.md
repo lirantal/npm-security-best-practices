@@ -38,6 +38,7 @@
 - 1 [Disable Post-Install Scripts](#1-disable-post-install-scripts)
   - 1.1. [pnpm disable post-install scripts](#11-pnpm-disable-post-install-scripts)
   - 1.2. [Bun disable post-install scripts](#12-bun-disable-post-install-scripts)
+  - 1.3. [Run the scripts you need](#13-run-the-scripts-you-need) 
 - 2 [Install with Cooldown](#2-install-with-cooldown)
   - 2.1. [pnpm minimumReleaseAge cooldown](#21-pnpm-minimumreleaseage-cooldown)
   - 2.2. [Snyk automated dependency upgrades with cooldown](#22-snyk-automated-dependency-upgrades-with-cooldown)
@@ -92,6 +93,12 @@ Beginning with version 10.0 [pnpm disables postinstall scripts by default](https
 ### 1.2. Bun disable post-install scripts
 
 [Bun disables postinstall scripts by default](https://bun.com/docs/install/lifecycle) and maintains its own internal allow-list of packages that are allowed to run postinstall scripts. Bun allows an "escape hatch" to allow postinstall scripts for specific [trusted packages](https://bun.com/docs/install/lifecycle#trusteddependencies) via a `trustedDependencies` field in `package.json`.
+
+### 1.3 Run the scripts you need
+Some of the install scripts are there for a reason. If you need to run them, do it in an auditable way and avoid npm trusting the package name in package.json too much.
+
+Use https://www.npmjs.com/package/@lavamoat/allow-scripts
+to create an allowlist of specific positions in your dependency graph where scripts are allowed.
 
 ---
 
