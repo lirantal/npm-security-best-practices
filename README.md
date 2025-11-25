@@ -11,7 +11,7 @@
 <p align="center">
  <img src="https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg" alt="Awesome" />
  <img src="https://badgen.net/badge/total%20best%20practices/12/blue" alt="npm security best practices" />
- <img src="https://badgen.net/badge/Last%20Update/Oct%2025/green" />
+ <img src="https://badgen.net/badge/Last%20Update/Nov%2025/green" />
  <a href="https://www.github.com/lirantal/nodejs-cli-apps-best-practices" target="_blank">
   <img src="https://badgen.net/badge/npm/Security Best Practices/purple" alt="npm Security Best Practices"/>
  </a>
@@ -316,9 +316,9 @@ Package managers like npm and yarn compensate for inconsistencies between `packa
 
 Different package managers provide specific commands for enforcing lockfile adherence:
 
-**yarn**: Use frozen lockfile mode:
+**yarn**: Validate the lockfile (and local cache) did not mutate:
 ```bash
-$ yarn install --frozen-lockfile
+$ yarn install --immutable --immutable-cache
 ```
 
 **pnpm**: Use frozen lockfile installation:
