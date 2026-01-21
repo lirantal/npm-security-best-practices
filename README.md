@@ -42,6 +42,7 @@
 - 2 [Install with Cooldown](#2-install-with-cooldown)
   - 2.1. [pnpm minimumReleaseAge cooldown](#21-pnpm-minimumreleaseage-cooldown)
   - 2.2. [Snyk automated dependency upgrades with cooldown](#22-snyk-automated-dependency-upgrades-with-cooldown)
+  - 2.3. [Bun minimumReleaseAge cooldown](#23-bun-minimumreleaseage-cooldown)
 - 3 [Use npq for hardening package installs](#3-use-npq-for-hardening-package-installs)
 - 4 [Prevent npm lockfile injection](#4-prevent-npm-lockfile-injection)
 - 5 [Use npm ci](#5-use-npm-ci)
@@ -143,6 +144,33 @@ This configuration prevents pnpm from installing any package version that was pu
 
 - Versions that introduce functional bugs and are subsequently unpublished
 - Versions released from compromised accounts where the owner has lost control to malicious actors
+
+### 2.3. Bun minimumReleaseAge cooldown
+
+Configure Bun to delay package installations by setting a minimum release age in your repository's Bun configuration file `bunfig.toml`:
+
+```toml
+[install]
+# Only install package versions published at least 3 days ago (in seconds)
+minimumReleaseAge = 259200
+```
+
+This configuration prevents Bun from installing any package version that was published less than the specified time period ago. The value is specified in seconds, so common cooldown periods would be:
+
+- 3 days: `259200` seconds
+- 1 week: `604800` seconds  
+- 2 weeks: `1209600` seconds
+
+You can also configure exceptions for specific packages that should bypass the cooldown period:
+
+```toml
+[install]
+minimumReleaseAge = 1209600  # 2 weeks
+# These packages will bypass the 2-week minimum age requirement
+minimumReleaseAgeExcludes = ["@types/bun", "typescript"]
+```
+
+For more information, refer to Bun's official documentation on [minimum release age](https://bun.sh/docs/runtime/bunfig#installminimumreleaseage).
 
 ---
 
@@ -283,6 +311,16 @@ pnpm is not susceptible to the same lockfile injection vulnerabilities as npm an
 - It doesn't maintain tarball sources that can be maliciously modified
 - It won't install packages listed in the lockfile that aren't declared in `package.json`
 - The `pnpm-lock.yaml` format is more resistant to injection attacks
+
+### Bun lockfile linting
+
+Bun uses its own lockfile format - either `bun.lock` (text-based, default since v1.2) or `bun.lockb` (binary format). Currently, `lockfile-lint` does not support Bun's lockfile formats.
+
+> [!NOTE]
+> If you are using Bun as your package manager, `lockfile-lint` is not currently available for validating `bun.lock` or `bun.lockb` files. Users should:
+> - Monitor the [lockfile-lint GitHub repository](https://github.com/lirantal/lockfile-lint) for future Bun support
+> - Check for alternative security tools that may support Bun lockfiles
+> - Follow Bun's security best practices, including using `minimumReleaseAge` cooldown (see [section 2.3](#23-bun-minimumreleaseage-cooldown))
 
 ---
 
