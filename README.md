@@ -11,7 +11,7 @@
 <p align="center">
  <img src="https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg" alt="Awesome" />
  <img src="https://badgen.net/badge/total%20best%20practices/12/blue" alt="npm security best practices" />
- <img src="https://badgen.net/badge/Last%20Update/Oct%2025/green" />
+ <img src="https://badgen.net/badge/Last%20Update/Nov%2025/green" />
  <a href="https://www.github.com/lirantal/nodejs-cli-apps-best-practices" target="_blank">
   <img src="https://badgen.net/badge/npm/Security Best Practices/purple" alt="npm Security Best Practices"/>
  </a>
@@ -38,6 +38,7 @@
 - 1 [Disable Post-Install Scripts](#1-disable-post-install-scripts)
   - 1.1. [pnpm disable post-install scripts](#11-pnpm-disable-post-install-scripts)
   - 1.2. [Bun disable post-install scripts](#12-bun-disable-post-install-scripts)
+  - 1.3. [Run the scripts you need](#13-run-the-scripts-you-need) 
 - 2 [Install with Cooldown](#2-install-with-cooldown)
   - 2.1. [pnpm / Bun / Yarn minimumReleaseAge cooldown](#21-pnpm--bun--yarn-minimumreleaseage-cooldown)
   - 2.2. [Snyk automated dependency upgrades with cooldown](#22-snyk-automated-dependency-upgrades-with-cooldown)
@@ -94,6 +95,12 @@ Beginning with version 10.0 [pnpm disables postinstall scripts by default](https
 ### 1.2. Bun disable post-install scripts
 
 [Bun disables postinstall scripts by default](https://bun.com/docs/install/lifecycle) and maintains its own internal allow-list of packages that are allowed to run postinstall scripts. Bun allows an "escape hatch" to allow postinstall scripts for specific [trusted packages](https://bun.com/docs/install/lifecycle#trusteddependencies) via a `trustedDependencies` field in `package.json`.
+
+### 1.3 Run the scripts you need
+Some of the install scripts are there for a reason. If you need to run them, do it in an auditable way and avoid npm trusting the package name in package.json too much.
+
+Use https://www.npmjs.com/package/@lavamoat/allow-scripts
+to create an allowlist of specific positions in your dependency graph where scripts are allowed.
 
 ---
 
@@ -322,6 +329,16 @@ pnpm is not susceptible to the same lockfile injection vulnerabilities as npm an
 - It won't install packages listed in the lockfile that aren't declared in `package.json`
 - The `pnpm-lock.yaml` format is more resistant to injection attacks
 
+### Bun lockfile linting
+
+Bun uses its own lockfile format - either `bun.lock` (text-based, default since v1.2) or `bun.lockb` (binary format). Currently, `lockfile-lint` does not support Bun's lockfile formats.
+
+> [!NOTE]
+> If you are using Bun as your package manager, `lockfile-lint` is not currently available for validating `bun.lock` or `bun.lockb` files. Users should:
+> - Monitor the [lockfile-lint GitHub repository](https://github.com/lirantal/lockfile-lint) for future Bun support
+> - Check for alternative security tools that may support Bun lockfiles
+> - Follow Bun's security best practices, including using `minimumReleaseAge` cooldown (see [section 2.3](#23-bun-minimumreleaseage-cooldown))
+
 ---
 
 ## 5. Use npm ci
@@ -354,9 +371,9 @@ Package managers like npm and yarn compensate for inconsistencies between `packa
 
 Different package managers provide specific commands for enforcing lockfile adherence:
 
-**yarn**: Use frozen lockfile mode:
+**yarn**: Validate the lockfile (and local cache) did not mutate:
 ```bash
-$ yarn install --frozen-lockfile
+$ yarn install --immutable --immutable-cache
 ```
 
 **pnpm**: Use frozen lockfile installation:
