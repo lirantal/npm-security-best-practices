@@ -39,10 +39,10 @@
   - 1.1. [pnpm disable post-install scripts](#11-pnpm-disable-post-install-scripts)
   - 1.2. [Bun disable post-install scripts](#12-bun-disable-post-install-scripts)
 - 2 [Install with Cooldown](#2-install-with-cooldown)
-  - 2.1. [pnpm / Bun minimumReleaseAge cooldown](#21-pnpm--bun-minimumreleaseage-cooldown)
-  - 2.2. [Dependabot automated dependency upgrades with cooldown](#22-dependabot-automated-dependency-upgrades-with-cooldown)
-  - 2.3. [Renovate bot automated dependency upgrades with cooldown](#23-renovate-bot-automated-dependency-upgrades-with-cooldown)
-  - 2.4. [Snyk automated dependency upgrades with cooldown](#24-snyk-automated-dependency-upgrades-with-cooldown)
+  - 2.1. [pnpm / Bun / Yarn minimumReleaseAge cooldown](#21-pnpm--bun--yarn-minimumreleaseage-cooldown)
+  - 2.2. [Snyk automated dependency upgrades with cooldown](#22-snyk-automated-dependency-upgrades-with-cooldown)
+  - 2.3. [Dependabot automated dependency upgrades with cooldown](#23-dependabot-automated-dependency-upgrades-with-cooldown)
+  - 2.4. [Renovate bot automated dependency upgrades with cooldown](#24-renovate-bot-automated-dependency-upgrades-with-cooldown)
 - 3 [Use npq for hardening package installs](#3-use-npq-for-hardening-package-installs)
 - 4 [Prevent npm lockfile injection](#4-prevent-npm-lockfile-injection)
 - 5 [Use npm ci](#5-use-npm-ci)
@@ -122,9 +122,9 @@ Attackers build on the npm versioning and publishing model which prefers and res
 >
 > Note: This approach requires manual date management and isn't ideal for automated workflows due to hardcoded dates.
 
-### 2.1. pnpm / Bun minimumReleaseAge cooldown
+### 2.1. pnpm / Bun / Yarn minimumReleaseAge cooldown
 
-Configure pnpm or Bun to delay package installations by setting a minimum release age in your repository's package manager configuration file.
+Configure pnpm or Bun or Yarn ([maybe also soon in npm](https://github.com/npm/cli/pull/8802)) to delay package installations by setting a minimum release age in your repository's package manager configuration file.
 
 For pnpm 10.16+, use [`pnpm-workspace.yaml`](https://pnpm.io/settings#minimumreleaseageexclude):
 
@@ -148,26 +148,39 @@ minimumReleaseAge = 259200 # seconds - in #23162 it'll allow "3d" too
 minimumReleaseAgeExcludes = ["@types/bun", "typescript"]
 ```
 
-This configuration prevents pnpm from installing any package version that was published less than the specified time period ago.
+For Yarn 4.10+, use [`.yarnrc.yml`](https://yarnpkg.com/configuration/yarnrc#npmMinimalAgeGate):
 
-### 2.2. Dependabot automated dependency upgrades with cooldown
+```yaml
+# .yarnrc.yml
+# Only consider npm package versions published at least 3 days ago
+npmMinimalAgeGate: "3d"
 
-Dependabot has a [`cooldown`](https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference#cooldown-) configuration option, for setting the number of days before a specific version of a dependency will be updated:
+# These packages bypass the age gate (package descriptors or glob patterns)
+npmPreapprovedPackages:
+  - "@types/react"
+  - "typescript"
+```
 
-> Defines a **cooldown** period for dependency updates, allowing updates to be delayed for a configurable number of days.
+These configurations prevent package managers from installing any package version that was published less than the specified time period ago.
 
-### 2.3. Renovate bot automated dependency upgrades with cooldown
-
-Renovate bot has a [`minimumReleaseAge`](https://docs.renovatebot.com/configuration-options/#minimumreleaseage) config option, for setting the minimum age of each package version before a pull request will be created for it:
-
-> Time required before a new release is considered stable.
-
-### 2.4. Snyk automated dependency upgrades with cooldown
+### 2.2. Snyk automated dependency upgrades with cooldown
 
 [Snyk automatically includes a built-in cooldown period](https://docs.snyk.io/scan-with-snyk/pull-requests/snyk-pull-or-merge-requests/upgrade-dependencies-with-automatic-prs-upgrade-prs/upgrade-open-source-dependencies-with-automatic-prs#automatic-dependency-upgrade-prs) for dependency upgrade Pull Requests. Snyk does not recommend upgrades to versions that are less than 21 days old to avoid:
 
 - Versions that introduce functional bugs and are subsequently unpublished
 - Versions released from compromised accounts where the owner has lost control to malicious actors
+
+### 2.3. Dependabot automated dependency upgrades with cooldown
+
+Dependabot has a [`cooldown`](https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference#cooldown-) configuration option, for setting the number of days before a specific version of a dependency will be updated:
+
+> Defines a **cooldown** period for dependency updates, allowing updates to be delayed for a configurable number of days.
+
+### 2.4. Renovate bot automated dependency upgrades with cooldown
+
+Renovate bot has a [`minimumReleaseAge`](https://docs.renovatebot.com/configuration-options/#minimumreleaseage) config option, for setting the minimum age of each package version before a pull request will be created for it:
+
+> Time required before a new release is considered stable.
 
 ---
 
