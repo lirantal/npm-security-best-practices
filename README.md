@@ -324,7 +324,7 @@ Both `npq` and `sfw` intercept package installations and provide security warnin
 | **Analysis method** | Pre-install checks via configurable "marshalls" | Real-time deep package analysis via Socket's platform |
 | **Data sources** | Snyk CVE database, npm registry metadata | Socket's proprietary threat intelligence and static analysis |
 | **Interactivity** | Interactive prompts before install | Blocks installs and prompts for flagged packages |
-| **Package manager support** | npm, pnpm, Bun (via env vars) | npm, yarn, pnpm |
+| **Package manager support** | npm, pnpm, Bun (via env vars) | npm, yarn, pnpm, pip, uv, cargo |
 | **Open source** | Yes | Client is open source; analysis platform is proprietary |
 
 ---
