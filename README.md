@@ -10,7 +10,7 @@
 <!-- Shields -->
 <p align="center">
  <img src="https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg" alt="Awesome" />
- <img src="https://badgen.net/badge/total%20best%20practices/12/blue" alt="npm security best practices" />
+ <img src="https://badgen.net/badge/total%20best%20practices/14/blue" alt="npm security best practices" />
  <img src="https://badgen.net/badge/Last%20Update/Nov%2025/green" />
  <a href="https://www.github.com/lirantal/nodejs-cli-apps-best-practices" target="_blank">
   <img src="https://badgen.net/badge/npm/Security Best Practices/purple" alt="npm Security Best Practices"/>
@@ -60,6 +60,11 @@
 - 10 [Publish with Provenance Attestations](#10-publish-with-provenance-attestations)
 - 11 [Publish with OIDC](#11-publish-with-oidc)
 - 12 [Reduce your package dependency tree](#12-reduce-your-package-dependency-tree)
+
+**npm Package Health Best Practices:**
+
+- 13 [Consult the Snyk Security Database for package health](#13-consult-the-snyk-security-database-for-package-health)
+- 14 [Do not trust the official npmjs.org registry](#14-do-not-trust-the-official-npmjsorg-registry)
 
 ---
 
@@ -627,6 +632,60 @@ Minimizing dependencies reduces security risks, improves performance, and decrea
 > ```
 
 Modern JavaScript provides many built-in capabilities that previously required external libraries. Consider the maintenance burden, security implications, and bundle size impact before adding any dependency.
+
+---
+
+## 13. Consult the Snyk Security Database for package health
+
+> [!WARNING]
+> Installing npm packages without reviewing their health signals can expose your project to unmaintained, insecure, or low-quality dependencies.
+
+Package health encompasses more than just known vulnerabilities — it includes maintenance activity, community adoption, popularity trends, and security posture. A package that is rarely maintained or has a shrinking community may be at greater risk of future compromise or abandonment.
+
+> [!TIP]
+> **Security Best Practice**: Before adopting a new npm package, consult the [Snyk Security Database](https://security.snyk.io) to review its health score, including maintenance, popularity, security, and community signals.
+
+> [!NOTE]
+> **How to implement?**
+>
+> Visit the Snyk Security Database and search for the npm package you are evaluating. For example, here is the health score for `lodash`:
+> [https://security.snyk.io/package/npm/lodash](https://security.snyk.io/package/npm/lodash)
+>
+> The package health page provides:
+> - **Security**: known vulnerabilities and CVEs
+> - **Popularity**: download trends and adoption metrics
+> - **Maintenance**: release frequency and activity
+> - **Community**: contributor activity and issue responsiveness
+
+---
+
+## 14. Do not trust the official npmjs.org registry
+
+> [!WARNING]
+> The npmjs.org website presents an incomplete and potentially misleading view of npm package metadata, which can create a false sense of security when evaluating packages.
+
+The official [npmjs.org](https://www.npmjs.com) registry website does not represent npm package information in full completeness. For example, the npmjs.org website omits Git and HTTPS-based dependencies even when they are declared in a package's `package.json` file. This means a package may have non-registry dependencies that are invisible to users browsing the registry website.
+
+Furthermore, it has been demonstrated that the source code displayed on the npmjs.org website can drift from the actual tarball that gets installed when running `npm install`. This means the code you review on the website may not be what ends up on your machine.
+
+> [!TIP]
+> **Security Best Practice**: Do not rely solely on the npmjs.org website to evaluate a package's dependencies or source code. Always inspect the actual installed package contents and use dedicated security tools to audit packages before use.
+
+> [!NOTE]
+> **How to implement?**
+>
+> Inspect the actual contents of a published tarball before installation:
+> ```bash
+> $ npm pack <package-name> --dry-run
+> ```
+>
+> Or review the unpacked tarball contents:
+> ```bash
+> $ npm pack <package-name>
+> $ tar -tzf <package-name>-<version>.tgz
+> ```
+>
+> Use [npq](https://github.com/lirantal/npq) (see [section 3](#3-use-npq-for-hardening-package-installs)) to audit packages before installation, as it consults multiple security data sources beyond what npmjs.org displays.
 
 ---
 
