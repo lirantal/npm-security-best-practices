@@ -282,26 +282,31 @@ $ MARSHALL_DISABLE_SNYK=1 npq install express
 ### 3.2. Use Socket Firewall (sfw) for blocking malicious packages
 
 > [!TIP]
-> **Security Best Practice**: Use [Socket Firewall (`sfw`)](https://socket.dev/blog/introducing-socket-firewall) as a real-time firewall that intercepts `npm install` commands and blocks packages flagged for malicious behavior, using Socket's deep package analysis and threat intelligence.
+> **Security Best Practice**: Use [Socket Firewall (`sfw`)](https://socket.dev/blog/introducing-socket-firewall) as a real-time firewall that intercepts supported package manager commands and blocks packages flagged for malicious behavior, using Socket's deep package analysis and threat intelligence.
 
 > [!NOTE]
 > **How to implement?**
 >
 > Install `sfw` globally:
 > ```bash
-> $ npm install -g @socket.dev/sfw
+> $ npm install -g sfw
 > ```
 >
-> Run it once to activate the firewall (it wraps your npm client):
+> Socket Firewall Free runs in wrapper mode. Prefix your package manager command with `sfw`:
 > ```bash
-> $ sfw activate
+> $ sfw npm install express
 > ```
 >
-> Once activated, every subsequent `npm install` is automatically intercepted by the firewall:
+> Examples with other supported package managers:
 > ```bash
-> $ npm install express
+> $ sfw pnpm add express
+> $ sfw yarn add express
+> $ sfw pip install requests
+> $ sfw uv pip install flask
+> $ sfw cargo fetch
 > ```
-> Socket Firewall will block the install if the package is flagged, and prompt you with details so you can make an informed decision.
+>
+> Socket Firewall will block the package fetch/install if a package is flagged, and prompt you with details so you can make an informed decision.
 
 #### What Socket Firewall checks
 
@@ -324,7 +329,7 @@ Both `npq` and `sfw` intercept package installations and provide security warnin
 | **Analysis method** | Pre-install checks via configurable "marshalls" | Real-time deep package analysis via Socket's platform |
 | **Data sources** | Snyk CVE database, npm registry metadata | Socket's proprietary threat intelligence and static analysis |
 | **Interactivity** | Interactive prompts before install | Blocks installs and prompts for flagged packages |
-| **Package manager support** | npm, pnpm, Bun (via env vars) | npm |
+| **Package manager support** | npm, pnpm, Bun (via env vars) | npm, yarn, pnpm, pip, uv, cargo |
 | **Open source** | Yes | Client is open source; analysis platform is proprietary |
 
 ---
