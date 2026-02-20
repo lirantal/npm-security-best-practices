@@ -44,7 +44,9 @@
   - 2.2. [Snyk automated dependency upgrades with cooldown](#22-snyk-automated-dependency-upgrades-with-cooldown)
   - 2.3. [Dependabot automated dependency upgrades with cooldown](#23-dependabot-automated-dependency-upgrades-with-cooldown)
   - 2.4. [Renovate bot automated dependency upgrades with cooldown](#24-renovate-bot-automated-dependency-upgrades-with-cooldown)
-- 3 [Use npq for hardening package installs](#3-use-npq-for-hardening-package-installs)
+- 3 [Harden package installs with security tools](#3-harden-package-installs-with-security-tools)
+  - 3.1. [Use npq for hardening package installs](#31-use-npq-for-hardening-package-installs)
+  - 3.2. [Use Socket Firewall (sfw) for blocking malicious packages](#32-use-socket-firewall-sfw-for-blocking-malicious-packages)
 - 4 [Prevent npm lockfile injection](#4-prevent-npm-lockfile-injection)
 - 5 [Use npm ci](#5-use-npm-ci)
 - 6 [Avoid blind npm package upgrades](#6-avoid-blind-npm-package-upgrades)
@@ -196,7 +198,7 @@ Renovate bot has a [`minimumReleaseAge`](https://docs.renovatebot.com/configurat
 
 ---
 
-## 3. Use npq for hardening package installs
+## 3. Harden package installs with security tools
 
 > [!WARNING]
 > You should never install npm packages without properly auditing their package health and security signals.
@@ -204,6 +206,8 @@ Renovate bot has a [`minimumReleaseAge`](https://docs.renovatebot.com/configurat
 How do you know if an npm package is safe to install? maybe it was just published yesterday? maybe you have an accidental typo in the package name and land on a similarly named malicious package? maybe the package has known vulnerabilities or malicious post-install scripts? Malicious packages can execute arbitrary code during installation, exfiltrate sensitive data, or introduce vulnerabilities into your system without your knowledge.
 
 Installing a new ad-hoc npm package can expose your system to supply chain attacks. Many attacks compromised trusted and popular npm packages, exploit typosquatting, or introduce malicious code in pre/post-install scripts that execute during the installation process.
+
+### 3.1. Use npq for hardening package installs
 
 > [!TIP]
 > **Security Best Practice**: Use [npq](https://github.com/lirantal/npq) as a proactive security control that audits npm packages before installation, providing comprehensive security checks, package health signals, and interactive warnings for potentially dangerous or high-risk packages.
@@ -232,7 +236,7 @@ Installing a new ad-hoc npm package can expose your system to supply chain attac
 > $ source ~/.zshrc
 > ```
 
-### What npq validates
+#### What npq validates
 
 npq performs comprehensive security audits using "marshalls" - specialized security validators that check for:
 
@@ -248,7 +252,7 @@ npq performs comprehensive security audits using "marshalls" - specialized secur
 - **Deprecation status**: Alerts for deprecated packages
 - **Maintainer domain validation**: Checks for expired domains in maintainer emails
 
-### pnpm and Bun compatibility
+#### pnpm and Bun compatibility
 
 npq works with different package managers through environment variables:
 
@@ -263,7 +267,7 @@ NPQ_PKG_MGR=bun npq install fastify
 alias pnpm="NPQ_PKG_MGR=pnpm npq-hero"
 ```
 
-### Advanced usage options
+#### Advanced usage options
 
 Run security checks without installing packages:
 ```bash
@@ -274,6 +278,54 @@ Disable specific security marshalls when needed:
 ```bash
 $ MARSHALL_DISABLE_SNYK=1 npq install express
 ```
+
+### 3.2. Use Socket Firewall (sfw) for blocking malicious packages
+
+> [!TIP]
+> **Security Best Practice**: Use [Socket Firewall (`sfw`)](https://socket.dev/blog/introducing-socket-firewall) as a real-time firewall that intercepts `npm install` commands and blocks packages flagged for malicious behavior, using Socket's deep package analysis and threat intelligence.
+
+> [!NOTE]
+> **How to implement?**
+>
+> Install `sfw` globally:
+> ```bash
+> $ npm install -g @socket.dev/sfw
+> ```
+>
+> Run it once to activate the firewall (it wraps your npm client):
+> ```bash
+> $ sfw activate
+> ```
+>
+> Once activated, every subsequent `npm install` is automatically intercepted by the firewall:
+> ```bash
+> $ npm install express
+> ```
+> Socket Firewall will block the install if the package is flagged, and prompt you with details so you can make an informed decision.
+
+#### What Socket Firewall checks
+
+Socket Firewall performs deep analysis on packages using Socket's threat intelligence, checking for:
+
+- **Malicious code detection**: Identifies packages that contain known malware or obfuscated code
+- **Install script risks**: Flags packages with suspicious pre/post-install scripts
+- **Typosquatting detection**: Catches packages with names similar to popular packages
+- **Dependency confusion**: Detects potential dependency confusion attacks
+- **Known vulnerabilities**: Cross-references CVE databases for disclosed vulnerabilities
+- **Protestware and env variable access**: Warns about packages that access environment variables or exhibit protestware behavior
+- **Network and filesystem access**: Highlights packages that perform unexpected network or disk operations
+
+#### Comparison with npq
+
+Both `npq` and `sfw` intercept package installations and provide security warnings, but they differ in approach:
+
+| | npq | sfw (Socket Firewall) |
+|---|---|---|
+| **Analysis method** | Pre-install checks via configurable "marshalls" | Real-time deep package analysis via Socket's platform |
+| **Data sources** | Snyk CVE database, npm registry metadata | Socket's proprietary threat intelligence and static analysis |
+| **Interactivity** | Interactive prompts before install | Blocks installs and prompts for flagged packages |
+| **Package manager support** | npm, pnpm, Bun (via env vars) | npm |
+| **Open source** | Yes | Client is open source; analysis platform is proprietary |
 
 ---
 
@@ -685,7 +737,7 @@ Furthermore, it has been demonstrated that the source code displayed on the npmj
 > $ tar -tzf <package-name>-<version>.tgz
 > ```
 >
-> Use [npq](https://github.com/lirantal/npq) (see [section 3](#3-use-npq-for-hardening-package-installs)) to audit packages before installation, as it consults multiple security data sources beyond what npmjs.org displays.
+> Use [npq](https://github.com/lirantal/npq) (see [section 3.1](#31-use-npq-for-hardening-package-installs)) to audit packages before installation, as it consults multiple security data sources beyond what npmjs.org displays.
 
 ---
 
