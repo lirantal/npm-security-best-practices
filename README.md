@@ -41,7 +41,7 @@
   - 1.3. [Run the scripts you need](#13-run-the-scripts-you-need) 
   - 1.4. [pnpm trust policy](#14-pnpm-trust-policy)
 - 2 [Install with Cooldown](#2-install-with-cooldown)
-  - 2.1. [pnpm / Bun / Yarn minimumReleaseAge cooldown](#21-pnpm--bun--yarn-minimumreleaseage-cooldown)
+  - 2.1. [npm / pnpm / Bun / Yarn minimumReleaseAge cooldown](#21-npm--pnpm--bun--yarn-minimumreleaseage-cooldown)
   - 2.2. [Snyk automated dependency upgrades with cooldown](#22-snyk-automated-dependency-upgrades-with-cooldown)
   - 2.3. [Dependabot automated dependency upgrades with cooldown](#23-dependabot-automated-dependency-upgrades-with-cooldown)
   - 2.4. [Renovate bot automated dependency upgrades with cooldown](#24-renovate-bot-automated-dependency-upgrades-with-cooldown)
@@ -191,21 +191,39 @@ Attackers build on the npm versioning and publishing model which prefers and res
 > [!NOTE]
 > **How to implement?**
 > 
-> Use npm's `--before` flag to install packages only if they were published before a specific date:
+> Set a persistent minimum release age in npm's configuration so that every `npm install` skips any package version published less than the specified number of days ago:
+> ```bash
+> $ npm config set min-release-age 3
+> ```
+>
+> Or use the `--before` flag for a one-off install to only consider packages published before a specific date:
 > ```bash
 > $ npm install express --before=2025-01-01
 > ```
 >
-> Or use shell command evaluation to make it dynamic with a 7-day cooldown:
+> Or use shell command evaluation with `--before` to make it dynamic with a 7-day cooldown:
 > ```bash
 > $ npm install express --before="$(date -v -7d)"
 > ```
 >
-> Note: This approach requires manual date management and isn't ideal for automated workflows due to hardcoded dates.
+> Note: The `--before` approach requires manual date management and isn't ideal for automated workflows due to hardcoded dates. Prefer `min-release-age` for a persistent configuration.
 
-### 2.1. pnpm / Bun / Yarn minimumReleaseAge cooldown
+### 2.1. npm / pnpm / Bun / Yarn minimumReleaseAge cooldown
 
-Configure pnpm or Bun or Yarn ([maybe also soon in npm](https://github.com/npm/cli/pull/8802)) to delay package installations by setting a minimum release age in your repository's package manager configuration file.
+Configure npm, pnpm, Bun, or Yarn to delay package installations by setting a minimum release age in your package manager's configuration file.
+
+For npm, set `min-release-age` in your `.npmrc` (or via `npm config set`):
+
+```ini
+# .npmrc
+min-release-age=3
+```
+
+Or set it globally so that all projects on your machine benefit:
+
+```bash
+$ npm config set min-release-age 3
+```
 
 For pnpm 10.16+, use [`pnpm-workspace.yaml`](https://pnpm.io/settings#minimumreleaseageexclude):
 
