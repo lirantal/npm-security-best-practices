@@ -39,8 +39,9 @@
   - 1.1. [pnpm disable post-install scripts](#11-pnpm-disable-post-install-scripts)
   - 1.2. [Bun disable post-install scripts](#12-bun-disable-post-install-scripts)
   - 1.3. [Run the scripts you need](#13-run-the-scripts-you-need) 
+  - 1.4. [pnpm trust policy](#14-pnpm-trust-policy)
 - 2 [Install with Cooldown](#2-install-with-cooldown)
-  - 2.1. [pnpm / Bun / Yarn minimumReleaseAge cooldown](#21-pnpm--bun--yarn-minimumreleaseage-cooldown)
+  - 2.1. [npm / pnpm / Bun / Yarn minimumReleaseAge cooldown](#21-npm--pnpm--bun--yarn-minimumreleaseage-cooldown)
   - 2.2. [Snyk automated dependency upgrades with cooldown](#22-snyk-automated-dependency-upgrades-with-cooldown)
   - 2.3. [Dependabot automated dependency upgrades with cooldown](#23-dependabot-automated-dependency-upgrades-with-cooldown)
   - 2.4. [Renovate bot automated dependency upgrades with cooldown](#24-renovate-bot-automated-dependency-upgrades-with-cooldown)
@@ -99,6 +100,39 @@ By disabling post-install scripts, you can mitigate the risk of such attacks by 
 
 Beginning with version 10.0 [pnpm disables postinstall scripts by default](https://pnpm.io/supply-chain-security). pnpm allows an "escape hatch" to re-enable postinstall scripts or set an explicit allow-list of packages that are allowed to run postinstall scripts.
 
+Use `pnpm-workspace.yaml` to control which packages are permitted to run build scripts:
+
+```yaml
+# pnpm-workspace.yaml
+
+# Allow only specific packages to run lifecycle scripts (pnpm 10+)
+onlyBuiltDependencies:
+  - esbuild
+  - fsevents
+  - nx@21.6.4 || 21.6.5   # pin allowed versions
+
+# Silently block specific packages and suppress the warning
+ignoredBuiltDependencies:
+  - sharp
+```
+
+> [!NOTE]
+> As of pnpm 10.26+, `allowBuilds` is the preferred replacement for both `onlyBuiltDependencies` and `ignoredBuiltDependencies` (the earlier settings are deprecated). It provides a single map of package-name → `true`/`false` to allow or deny build scripts:
+> ```yaml
+> allowBuilds:
+>   esbuild: true
+>   core-js: false
+>   nx@21.6.4 || 21.6.5: true
+> ```
+
+To make unreviewed build scripts a hard error (rather than a warning), enable `strictDepBuilds` (pnpm 10.3+):
+
+```yaml
+strictDepBuilds: true
+```
+
+With `strictDepBuilds: true`, `pnpm install` will exit with a non-zero code if any dependency tries to run a lifecycle script that has not been explicitly allowed, turning silent warnings into CI-blocking failures.
+
 ### 1.2. Bun disable post-install scripts
 
 [Bun disables postinstall scripts by default](https://bun.com/docs/install/lifecycle) and maintains its own internal allow-list of packages that are allowed to run postinstall scripts. Bun allows an "escape hatch" to allow postinstall scripts for specific [trusted packages](https://bun.com/docs/install/lifecycle#trusteddependencies) via a `trustedDependencies` field in `package.json`.
@@ -108,6 +142,39 @@ Some of the install scripts are there for a reason. If you need to run them, do 
 
 Use https://www.npmjs.com/package/@lavamoat/allow-scripts
 to create an allowlist of specific positions in your dependency graph where scripts are allowed.
+
+### 1.4. pnpm trust policy
+
+pnpm 10.21+ ships a `trustPolicy` setting that detects when a package's **publish-time trust level has decreased** compared to earlier releases — for example, when a package previously published via a Trusted Publisher (OIDC/GitHub Actions) is now published without provenance or signatures. This can be an early signal of an account compromise or supply chain attack.
+
+> [!TIP]
+> **Security Best Practice**: Set `trustPolicy: no-downgrade` so that pnpm refuses to install any package version whose trust evidence is weaker than a previously published version of that package.
+
+> [!NOTE]
+> **How to implement?**
+>
+> In `pnpm-workspace.yaml`:
+> ```yaml
+> # Fail if a package's trust level has decreased (pnpm 10.21+)
+> trustPolicy: no-downgrade
+>
+> # Allow specific packages or versions to bypass the check when needed
+> trustPolicyExclude:
+>   - 'chokidar@4.0.3'
+>   - 'webpack@4.47.0 || 5.102.1'
+>
+> # Ignore the check for packages published more than 30 days ago (pnpm 10.27+)
+> # Useful for older packages that pre-date provenance support
+> trustPolicyIgnoreAfter: 43200  # minutes (30 days)
+> ```
+
+Trust levels pnpm recognises (strongest → weakest):
+1. **Trusted Publisher** – published via a configured Trusted Publisher (e.g. GitHub Actions OIDC)
+2. **Provenance** – published with an npm provenance attestation
+3. **Signatures** – package registry signature present
+4. **No evidence** – no trust signals at all
+
+When `trustPolicy: no-downgrade` is enabled, if any previously published version of a package had a higher trust level than the version being installed, the install is aborted.
 
 ---
 
@@ -124,21 +191,39 @@ Attackers build on the npm versioning and publishing model which prefers and res
 > [!NOTE]
 > **How to implement?**
 > 
-> Use npm's `--before` flag to install packages only if they were published before a specific date:
+> Set a persistent minimum release age in npm's configuration so that every `npm install` skips any package version published less than the specified number of days ago:
+> ```bash
+> $ npm config set min-release-age 3
+> ```
+>
+> Or use the `--before` flag for a one-off install to only consider packages published before a specific date:
 > ```bash
 > $ npm install express --before=2025-01-01
 > ```
 >
-> Or use shell command evaluation to make it dynamic with a 7-day cooldown:
+> Or use shell command evaluation with `--before` to make it dynamic with a 7-day cooldown:
 > ```bash
 > $ npm install express --before="$(date -v -7d)"
 > ```
 >
-> Note: This approach requires manual date management and isn't ideal for automated workflows due to hardcoded dates.
+> Note: The `--before` approach requires manual date management and isn't ideal for automated workflows due to hardcoded dates. Prefer `min-release-age` for a persistent configuration.
 
-### 2.1. pnpm / Bun / Yarn minimumReleaseAge cooldown
+### 2.1. npm / pnpm / Bun / Yarn minimumReleaseAge cooldown
 
-Configure pnpm or Bun or Yarn ([maybe also soon in npm](https://github.com/npm/cli/pull/8802)) to delay package installations by setting a minimum release age in your repository's package manager configuration file.
+Configure npm, pnpm, Bun, or Yarn to delay package installations by setting a minimum release age in your package manager's configuration file.
+
+For npm, set `min-release-age` in your `.npmrc` (or via `npm config set`):
+
+```ini
+# .npmrc
+min-release-age=3
+```
+
+Or set it globally so that all projects on your machine benefit:
+
+```bash
+$ npm config set min-release-age 3
+```
 
 For pnpm 10.16+, use [`pnpm-workspace.yaml`](https://pnpm.io/settings#minimumreleaseageexclude):
 
@@ -390,6 +475,27 @@ pnpm is not susceptible to the same lockfile injection vulnerabilities as npm an
 - It doesn't maintain tarball sources that can be maliciously modified
 - It won't install packages listed in the lockfile that aren't declared in `package.json`
 - The `pnpm-lock.yaml` format is more resistant to injection attacks
+
+### pnpm blockExoticSubdeps
+
+Even with a clean lockfile, a transitive dependency can pull in code from an arbitrary git repository or a raw tarball URL — sources that are opaque to typical registry security scanning. pnpm 10.26+ introduces `blockExoticSubdeps` to prevent this.
+
+> [!TIP]
+> **Security Best Practice**: Enable `blockExoticSubdeps: true` so that only your direct dependencies (those declared in `package.json`) are allowed to use exotic sources such as git repositories or direct tarball URLs. All transitive dependencies must be resolved from the configured registry, local file paths, workspace links, or trusted GitHub repositories.
+
+> [!NOTE]
+> **How to implement?**
+>
+> In `pnpm-workspace.yaml`:
+> ```yaml
+> blockExoticSubdeps: true
+> ```
+>
+> Exotic sources that are blocked for transitive dependencies include:
+> - Git repositories (`git+ssh://...`, `git+https://...`)
+> - Direct URL links to tarballs (`https://.../package.tgz`)
+>
+> Direct dependencies listed in your root `package.json` are still permitted to use exotic sources.
 
 ### Bun lockfile linting
 
