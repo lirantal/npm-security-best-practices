@@ -96,6 +96,24 @@ By disabling post-install scripts, you can mitigate the risk of such attacks by 
 > $ npm install --ignore-scripts <package-name>
 > ```
 
+> [!WARNING]
+> **Closing the git-dependency loop (npm CLI 11.10.0+)**
+>
+> Even with `--ignore-scripts`, a git-based dependency URL (e.g. `"pkg": "git+https://github.com/org/pkg"`) can ship its own `.npmrc` file that re-enables lifecycle scripts, effectively bypassing the flag. npm CLI 11.10.0 introduced the `--allow-git` option to control whether git-hosted packages may run lifecycle scripts at all.
+>
+> Use `--allow-git=none` together with `--ignore-scripts` to fully close this attack vector:
+> ```bash
+> $ npm install --ignore-scripts --allow-git=none
+> ```
+>
+> To make this the permanent default, add both settings to your global npm configuration:
+> ```bash
+> $ npm config set ignore-scripts true
+> $ npm config set allow-git none
+> ```
+>
+> See the [official npm documentation for `--allow-git`](https://docs.npmjs.com/cli/v11/commands/npm-install#allow-git) for more details.
+
 ### 1.1. pnpm disable post-install scripts
 
 Beginning with version 10.0 [pnpm disables postinstall scripts by default](https://pnpm.io/supply-chain-security). pnpm allows an "escape hatch" to re-enable postinstall scripts or set an explicit allow-list of packages that are allowed to run postinstall scripts.
