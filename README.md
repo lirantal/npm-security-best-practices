@@ -74,7 +74,7 @@
 ## 1. Disable Post-Install Scripts
 
 > [!WARNING]
-> Post-install scripts are a common and recurring attack vector for supply chain attacks.
+> Post-install scripts are a common and recurring attack vector for supply chain attacks. Additionally, even with `--ignore-scripts` set, a git-based dependency URL (e.g. `"pkg": "git+https://github.com/org/pkg"`) can ship its own `.npmrc` file that re-enables lifecycle scripts, silently bypassing the flag. Use `--allow-git=none` (npm CLI 11.10.0+) alongside `--ignore-scripts` to fully close this attack vector.
 
 Recent attacks like Shai-Hulud[^1], Nx[^2] and long-standing attacks like event-stream[^3] have all leveraged npm `postinstall` scripts to execute arbitrary code on a developer's machine during package installation in order to exfiltrate sensitive data, trigger a worm-like propagation, or perform other malicious activities.
 
@@ -86,30 +86,15 @@ By disabling post-install scripts, you can mitigate the risk of such attacks by 
 > [!NOTE]
 > **How to implement?**
 > 
-> It is *highly recommended* at a global configuration to set npm's `ignore-scripts` configuration to `true` to disable all post-install scripts for all projects on your machine:
+> It is *highly recommended* in your global configuration to set npm's `ignore-scripts` and `allow-git` configurations to disable all post-install scripts for all projects on your machine:
 > ```bash
 > $ npm config set ignore-scripts true
+> $ npm config set allow-git none
 > ```
 >
 > Or disable npm's post-install scripts when performing ad-hoc package install using the command line:
 > ```bash
-> $ npm install --ignore-scripts <package-name>
-> ```
-
-> [!WARNING]
-> **Closing the git-dependency loop (npm CLI 11.10.0+)**
->
-> Even with `--ignore-scripts`, a git-based dependency URL (e.g. `"pkg": "git+https://github.com/org/pkg"`) can ship its own `.npmrc` file that re-enables lifecycle scripts, effectively bypassing the flag. npm CLI 11.10.0 introduced the `--allow-git` option to control whether git-hosted packages may run lifecycle scripts at all.
->
-> Use `--allow-git=none` together with `--ignore-scripts` to fully close this attack vector:
-> ```bash
-> $ npm install --ignore-scripts --allow-git=none
-> ```
->
-> To make this the permanent default, add both settings to your global npm configuration:
-> ```bash
-> $ npm config set ignore-scripts true
-> $ npm config set allow-git none
+> $ npm install --ignore-scripts --allow-git=none <package-name>
 > ```
 >
 > See the [official npm documentation for `--allow-git`](https://docs.npmjs.com/cli/v11/commands/npm-install#allow-git) for more details.
