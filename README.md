@@ -884,6 +884,8 @@ This attack remains viable because npm has no protocol-level mechanism linking p
 > ```
 >
 > This ensures that `@yourcompany/*` packages are only ever resolved from your private registry, while all other packages resolve from the public registry as normal.
+>
+> **Important:** Only put registry URLs in the committed `.npmrc`. Never commit authentication tokens — keep credentials in a user-level `~/.npmrc` or inject them via environment variables (e.g. `NPM_TOKEN`) in CI. See [section 7](#7-no-plaintext-secrets-in-env-files) for broader guidance on secrets management.
 
 ### Why scoped names are essential
 
