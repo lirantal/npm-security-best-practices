@@ -267,7 +267,7 @@ These configurations prevent package managers from installing any package versio
 
 ### 2.2. Snyk automated dependency upgrades with cooldown
 
-[Snyk automatically includes a built-in cooldown period](https://docs.snyk.io/scan-with-snyk/pull-requests/snyk-pull-or-merge-requests/upgrade-dependencies-with-automatic-prs-upgrade-prs/upgrade-open-source-dependencies-with-automatic-prs#automatic-dependency-upgrade-prs) for dependency upgrade Pull Requests. Snyk does not recommend upgrades to versions that are less than 21 days old to avoid:
+[Snyk automatically includes a built-in cooldown period](https://docs.snyk.io/developer-tools/scm-integrations/deployment-recommendations#how-automatic-upgrade-prs-work) for dependency upgrade Pull Requests. Snyk does not recommend upgrades to versions that are less than 21 days old to avoid:
 
 - Versions that introduce functional bugs and are subsequently unpublished
 - Versions released from compromised accounts where the owner has lost control to malicious actors
