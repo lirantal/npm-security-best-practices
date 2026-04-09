@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:astral.sh)",
+      "WebFetch(domain:blog.pypi.org)",
+      "WebFetch(domain:scaledpython.substack.com)",
+      "WebSearch",
+      "WebFetch(domain:docs.litellm.ai)",
+      "WebFetch(domain:securitylabs.datadoghq.com)",
+      "WebFetch(domain:bernat.tech)",
+      "WebFetch(domain:pydevtools.com)",
+      "WebFetch(domain:pypi.org)",
+      "WebFetch(domain:mkennedy.codes)",
+      "WebFetch(domain:web.archive.org)",
+      "Bash(echo \"Exit code: $?\")"
+    ]
+  }
+}
