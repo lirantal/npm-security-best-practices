@@ -279,6 +279,21 @@ Dependabot has a [`cooldown`](https://docs.github.com/en/code-security/dependabo
 
 > Defines a **cooldown** period for dependency updates, allowing updates to be delayed for a configurable number of days.
 
+```yaml
+# .github/dependabot.yml
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 7
+      semver-major-days: 7
+      semver-minor-days: 7
+      semver-patch-days: 7
+```
+
 ### 2.4. Renovate bot automated dependency upgrades with cooldown
 
 Renovate bot has a [`minimumReleaseAge`](https://docs.renovatebot.com/configuration-options/#minimumreleaseage) config option, for setting the minimum age of each package version before a pull request will be created for it:
