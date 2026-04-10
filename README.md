@@ -10,8 +10,8 @@
 <!-- Shields -->
 <p align="center">
  <img src="https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg" alt="Awesome" />
- <img src="https://badgen.net/badge/total%20best%20practices/15/blue" alt="npm security best practices" />
- <img src="https://badgen.net/badge/Last%20Update/Apr%209/green" />
+ <img src="https://badgen.net/badge/total%20best%20practices/16/blue" alt="npm security best practices" />
+ <img src="https://badgen.net/badge/Last%20Update/Apr%2010/green" />
  <a href="https://www.github.com/lirantal/nodejs-cli-apps-best-practices" target="_blank">
   <img src="https://badgen.net/badge/npm/Security Best Practices/purple" alt="npm Security Best Practices"/>
  </a>
@@ -69,6 +69,7 @@
 
 - 14 [Consult the Snyk Security Database for package health](#14-consult-the-snyk-security-database-for-package-health)
 - 15 [Do not trust the official npmjs.org registry](#15-do-not-trust-the-official-npmjsorg-registry)
+- 16 [Prevent dependency confusion attacks](#15-prevent-dependency-confusion-attacks)
 
 ---
 
@@ -917,6 +918,67 @@ Furthermore, it has been demonstrated that the source code displayed on the npmj
 
 ---
 
+## 16. Prevent dependency confusion attacks
+
+> [!WARNING]
+> If your organisation uses a private npm registry alongside the public npmjs.org registry, an attacker can publish a same-named package to the public registry with a higher version number, causing your package manager to install the malicious public version instead of your internal package.
+
+In 2021, security researcher Alex Birsan demonstrated[^8] how dependency confusion attacks could compromise major companies including Apple, Microsoft, and PayPal by publishing public npm packages with the same names as internal private packages. When a package manager resolves an unscoped name, it checks the public registry by default — and prefers the highest available semver version, regardless of source.
+
+This attack remains viable because npm has no protocol-level mechanism linking private registry namespaces to public registry namespaces. Any unscoped private package name can be claimed on the public registry by anyone.
+
+> [!TIP]
+> **Security Best Practice**: Use scoped package names (`@yourorg/package-name`) for all internal packages and configure your `.npmrc` to route your organisation's scope exclusively to your private registry.
+
+> [!NOTE]
+> **How to implement?**
+>
+> Step 1: Use scoped names for all internal packages. In each internal package's `package.json`:
+> ```json
+> {
+>   "name": "@yourcompany/my-internal-tool"
+> }
+> ```
+>
+> Step 2: Configure `.npmrc` at the project root (and commit it to version control) to route your scope to your private registry:
+> ```ini
+> @yourcompany:registry=https://npm.yourcompany.com/
+> ```
+>
+> This ensures that `@yourcompany/*` packages are only ever resolved from your private registry, while all other packages resolve from the public registry as normal.
+>
+> **Important:** Only put registry URLs in the committed `.npmrc`. Never commit authentication tokens — keep credentials in a user-level `~/.npmrc` or inject them via environment variables (e.g. `NPM_TOKEN`) in CI. See [section 7](#7-no-plaintext-secrets-in-env-files) for broader guidance on secrets management.
+
+### Why scoped names are essential
+
+Unscoped private package names (e.g. `my-company-utils`) are inherently vulnerable because:
+- Anyone can publish that exact name to the public npm registry
+- npm will resolve the highest semver version across all configured registries
+- There is no way to "reserve" an unscoped name on the public registry without publishing to it
+
+Scoped packages (`@yourcompany/utils`) mitigate this because scopes on npmjs.org are tied to npm organisations, preventing others from publishing under your scope.
+
+### pnpm and Yarn registry scoping
+
+The `.npmrc` registry scoping approach works across package managers:
+
+**pnpm**: Reads `.npmrc` and supports the same per-scope registry configuration.
+
+**Yarn** (v2+): Uses `.yarnrc.yml` instead:
+```yaml
+npmScopes:
+  yourcompany:
+    npmRegistryServer: "https://npm.yourcompany.com/"
+```
+
+### Additional mitigations
+
+- **Claim your internal package names on the public registry**: Publish placeholder packages to npmjs.org for any unscoped internal names you cannot immediately migrate to scoped names.
+- **Use `lockfile-lint`** (see [section 4](#4-prevent-npm-lockfile-injection)) to verify that resolved package URLs point to expected registries.
+- **Enable `blockExoticSubdeps`** in pnpm (see [section 4](#4-prevent-npm-lockfile-injection)) to prevent transitive dependencies from pulling packages from unexpected sources.
+
+---
+
 ## Author
 
 **npm Security Best Practices** © [Liran Tal](https://github.com/lirantal), Released under [Apache 2.0](./LICENSE) License.
@@ -928,3 +990,4 @@ Furthermore, it has been demonstrated that the source code displayed on the npmj
 [^5]: [Node-ipc Incident](https://snyk.io/blog/peacenotwar-malicious-npm-node-ipc-package-vulnerability/)
 [^6]: [Eslint-scope Incident](https://eslint.org/blog/2018/07/postmortem-for-malicious-package-publishes/)
 [^7]: [Axios npm Supply Chain Compromise (March 2026)](https://github.com/axios/axios/issues/10636) — Compromised maintainer account published backdoored versions delivering a cross-platform RAT via malicious post-install dependency. See also: [Microsoft analysis](https://www.microsoft.com/en-us/security/blog/2026/04/01/mitigating-the-axios-npm-supply-chain-compromise/), [Snyk analysis](https://snyk.io/blog/axios-npm-package-compromised-supply-chain-attack-delivers-cross-platform/)
+[^8]: [Dependency Confusion: How I Hacked Into Apple, Microsoft and Dozens of Other Companies](https://medium.com/@alex.birsan/dependency-confusion-4a5d60fec610)
