@@ -10,8 +10,8 @@
 <!-- Shields -->
 <p align="center">
  <img src="https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg" alt="Awesome" />
- <img src="https://badgen.net/badge/total%20best%20practices/15/blue" alt="npm security best practices" />
- <img src="https://badgen.net/badge/Last%20Update/Nov%2025/green" />
+ <img src="https://badgen.net/badge/total%20best%20practices/16/blue" alt="npm security best practices" />
+ <img src="https://badgen.net/badge/Last%20Update/Apr%2010/green" />
  <a href="https://www.github.com/lirantal/nodejs-cli-apps-best-practices" target="_blank">
   <img src="https://badgen.net/badge/npm/Security Best Practices/purple" alt="npm Security Best Practices"/>
  </a>
@@ -51,24 +51,25 @@
 - 4 [Prevent npm lockfile injection](#4-prevent-npm-lockfile-injection)
 - 5 [Use npm ci](#5-use-npm-ci)
 - 6 [Avoid blind npm package upgrades](#6-avoid-blind-npm-package-upgrades)
+- 7 [Harden npx execution](#7-harden-npx-execution)
 
 **Secure Local Development Best Practices:**
 
-- 7 [No plaintext secrets in .env files](#7-no-plaintext-secrets-in-env-files)
-- 8 [Work in Dev Containers](#8-work-in-dev-containers)
+- 8 [No plaintext secrets in .env files](#8-no-plaintext-secrets-in-env-files)
+- 9 [Work in Dev Containers](#9-work-in-dev-containers)
 
 **npm Maintainer Security Best Practices:**
 
-- 9 [Enable 2FA for npm accounts](#9-enable-2fa-for-npm-accounts)
-- 10 [Publish with Provenance Attestations](#10-publish-with-provenance-attestations)
-- 11 [Publish with OIDC](#11-publish-with-oidc)
-- 12 [Reduce your package dependency tree](#12-reduce-your-package-dependency-tree)
+- 10 [Enable 2FA for npm accounts](#10-enable-2fa-for-npm-accounts)
+- 11 [Publish with Provenance Attestations](#11-publish-with-provenance-attestations)
+- 12 [Publish with OIDC](#12-publish-with-oidc)
+- 13 [Reduce your package dependency tree](#13-reduce-your-package-dependency-tree)
 
 **npm Package Health Best Practices:**
 
-- 13 [Consult the Snyk Security Database for package health](#13-consult-the-snyk-security-database-for-package-health)
-- 14 [Do not trust the official npmjs.org registry](#14-do-not-trust-the-official-npmjsorg-registry)
-- 15 [Prevent dependency confusion attacks](#15-prevent-dependency-confusion-attacks)
+- 14 [Consult the Snyk Security Database for package health](#14-consult-the-snyk-security-database-for-package-health)
+- 15 [Do not trust the official npmjs.org registry](#15-do-not-trust-the-official-npmjsorg-registry)
+- 16 [Prevent dependency confusion attacks](#15-prevent-dependency-confusion-attacks)
 
 ---
 
@@ -268,7 +269,7 @@ These configurations prevent package managers from installing any package versio
 
 ### 2.2. Snyk automated dependency upgrades with cooldown
 
-[Snyk automatically includes a built-in cooldown period](https://docs.snyk.io/scan-with-snyk/pull-requests/snyk-pull-or-merge-requests/upgrade-dependencies-with-automatic-prs-upgrade-prs/upgrade-open-source-dependencies-with-automatic-prs#automatic-dependency-upgrade-prs) for dependency upgrade Pull Requests. Snyk does not recommend upgrades to versions that are less than 21 days old to avoid:
+[Snyk automatically includes a built-in cooldown period](https://docs.snyk.io/developer-tools/scm-integrations/deployment-recommendations#how-automatic-upgrade-prs-work) for dependency upgrade Pull Requests. Snyk does not recommend upgrades to versions that are less than 21 days old to avoid:
 
 - Versions that introduce functional bugs and are subsequently unpublished
 - Versions released from compromised accounts where the owner has lost control to malicious actors
@@ -603,7 +604,68 @@ Some developers automatically upgrade all dependencies to the latest versions as
 
 ---
 
-## 7. No plaintext secrets in .env files
+## 7. Harden npx execution
+
+> [!WARNING]
+> `npx` resolves, downloads, and executes packages from the npm registry in a single step — with no lockfile, no hash verification, and no cooldown. Every invocation can silently pull in a newly published, potentially malicious version of a package. The Axios supply chain compromise[^7] demonstrated this risk when a compromised maintainer account published backdoored versions of a package with 70+ million weekly downloads, delivering a cross-platform RAT through a malicious post-install dependency.
+
+MCP servers, linters, formatters, and other developer tools are commonly launched via `npx` (e.g., `npx @modelcontextprotocol/server-filesystem`). Each invocation is an uncontrolled package resolution — if a package is compromised between two runs, the malicious version is fetched and executed immediately. This is especially dangerous for MCP servers which typically have access to your filesystem, environment variables, and other sensitive resources.
+
+> [!TIP]
+> **Security Best Practice**: Pre-install packages in a dedicated workspace with a lockfile, then force `npx` to run in offline mode using only pre-vetted, lockfile-verified packages. Never allow `npx` to fetch and execute arbitrary code from the registry in unsupervised contexts.
+
+> [!CAUTION]
+> **Anti-pattern**:
+> Avoid running npx without version pinning or offline enforcement:
+> ```bash
+> $ npx some-package        # Downloads and executes latest version
+> $ npx @scope/mcp-server   # No lockfile, no hash check
+> ```
+
+> [!NOTE]
+> **How to implement?**
+>
+> Step 1: Create a workspace for your npx packages and install them with a lockfile:
+> ```bash
+> $ mkdir -p $HOME/mcp && cd $HOME/mcp
+> $ npm init -y
+> $ npm install @modelcontextprotocol/server-filesystem
+> ```
+>
+> Step 2: Run npx with offline mode, forcing it to use only pre-installed packages:
+> ```bash
+> $ npx --include-workspace-root --workspace $HOME/mcp --no --offline @modelcontextprotocol/server-filesystem /path/to/dir
+> ```
+>
+> The `--no` flag refuses to download packages not already installed. The `--offline` flag prevents any network requests. Together with `--workspace`, npx will only execute code from your pre-vetted, lockfile-verified workspace.
+
+### MCP server configuration
+
+When configuring MCP servers for AI coding tools, include the offline flags in every npx invocation:
+
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "--include-workspace-root",
+        "--workspace", "$HOME/mcp",
+        "--no",
+        "--offline",
+        "@modelcontextprotocol/server-filesystem",
+        "/path/to/allowed/directory"
+      ]
+    }
+  }
+}
+```
+
+To update your pre-vetted packages, explicitly run `npm update` in the workspace directory and review the lockfile changes before your next `npx` invocation.
+
+---
+
+## 8. No plaintext secrets in .env files
 
 > [!WARNING]
 > Storing secrets in plaintext environment variables or `.env` files creates a significant security risk, making sensitive data easily accessible to attackers who successfully launch supply chain attacks or gain access to your system.
@@ -648,7 +710,7 @@ Even if `.env` files are not committed to version control, they remain vulnerabl
 
 ---
 
-## 8. Work in Dev Containers
+## 9. Work in Dev Containers
 
 > [!WARNING]
 > Running npm packages directly on your host development machine exposes your entire system to potential malware, allowing malicious packages to access sensitive files, spawning agentic coding CLIs, agent environment variables, and system resources.
@@ -695,7 +757,7 @@ Even if `.env` files are not committed to version control, they remain vulnerabl
 
 ---
 
-## 9. Enable 2FA for npm accounts
+## 10. Enable 2FA for npm accounts
 
 > [!WARNING]
 > npm accounts without two-factor authentication are vulnerable to credential theft and account takeover attacks, potentially allowing malicious actors to publish compromised versions of your packages.
@@ -720,7 +782,7 @@ The eslint-scope[^6] incident in 2018 demonstrated the risks of compromised npm 
 
 ---
 
-## 10. Publish with Provenance Attestations
+## 11. Publish with Provenance Attestations
 
 > [!WARNING]
 > Packages without provenance attestations cannot be verified for their build origin or authenticity, making it difficult for users to trust the integrity of your published packages in order to determine if they were built from the intended source code on GitHub or by malicious actors who may have compromised your npm account.
@@ -746,7 +808,7 @@ Provenance statements provide cryptographic proof of where and how your packages
 
 ---
 
-## 11. Publish with OIDC
+## 12. Publish with OIDC
 
 > [!WARNING]
 > Long-lived npm tokens can be compromised, accidentally exposed in logs, or provide persistent unauthorized access if stolen, posing significant security risks to your packages.
@@ -773,7 +835,7 @@ Trusted publishing supports GitHub Actions and GitLab CI/CD, and automatically g
 
 ---
 
-## 12. Reduce your package dependency tree
+## 13. Reduce your package dependency tree
 
 > [!WARNING]
 > Each dependency in your package increases the attack surface and potential for supply chain vulnerabilities, as users inherit all transitive dependencies when installing your package.
@@ -802,7 +864,7 @@ Modern JavaScript provides many built-in capabilities that previously required e
 
 ---
 
-## 13. Consult the Snyk Security Database for package health
+## 14. Consult the Snyk Security Database for package health
 
 > [!WARNING]
 > Installing npm packages without reviewing their health signals can expose your project to unmaintained, insecure, or low-quality dependencies.
@@ -826,7 +888,7 @@ Package health encompasses more than just known vulnerabilities — it includes 
 
 ---
 
-## 14. Do not trust the official npmjs.org registry
+## 15. Do not trust the official npmjs.org registry
 
 > [!WARNING]
 > The npmjs.org website presents an incomplete and potentially misleading view of npm package metadata, which can create a false sense of security when evaluating packages.
@@ -856,12 +918,12 @@ Furthermore, it has been demonstrated that the source code displayed on the npmj
 
 ---
 
-## 15. Prevent dependency confusion attacks
+## 16. Prevent dependency confusion attacks
 
 > [!WARNING]
 > If your organisation uses a private npm registry alongside the public npmjs.org registry, an attacker can publish a same-named package to the public registry with a higher version number, causing your package manager to install the malicious public version instead of your internal package.
 
-In 2021, security researcher Alex Birsan demonstrated[^7] how dependency confusion attacks could compromise major companies including Apple, Microsoft, and PayPal by publishing public npm packages with the same names as internal private packages. When a package manager resolves an unscoped name, it checks the public registry by default — and prefers the highest available semver version, regardless of source.
+In 2021, security researcher Alex Birsan demonstrated[^8] how dependency confusion attacks could compromise major companies including Apple, Microsoft, and PayPal by publishing public npm packages with the same names as internal private packages. When a package manager resolves an unscoped name, it checks the public registry by default — and prefers the highest available semver version, regardless of source.
 
 This attack remains viable because npm has no protocol-level mechanism linking private registry namespaces to public registry namespaces. Any unscoped private package name can be claimed on the public registry by anyone.
 
@@ -927,4 +989,5 @@ npmScopes:
 [^4]: [Colors Package Incident](https://snyk.io/blog/open-source-npm-packages-colors-faker/)
 [^5]: [Node-ipc Incident](https://snyk.io/blog/peacenotwar-malicious-npm-node-ipc-package-vulnerability/)
 [^6]: [Eslint-scope Incident](https://eslint.org/blog/2018/07/postmortem-for-malicious-package-publishes/)
-[^7]: [Dependency Confusion: How I Hacked Into Apple, Microsoft and Dozens of Other Companies](https://medium.com/@alex.birsan/dependency-confusion-4a5d60fec610)
+[^7]: [Axios npm Supply Chain Compromise (March 2026)](https://github.com/axios/axios/issues/10636) — Compromised maintainer account published backdoored versions delivering a cross-platform RAT via malicious post-install dependency. See also: [Microsoft analysis](https://www.microsoft.com/en-us/security/blog/2026/04/01/mitigating-the-axios-npm-supply-chain-compromise/), [Snyk analysis](https://snyk.io/blog/axios-npm-package-compromised-supply-chain-attack-delivers-cross-platform/)
+[^8]: [Dependency Confusion: How I Hacked Into Apple, Microsoft and Dozens of Other Companies](https://medium.com/@alex.birsan/dependency-confusion-4a5d60fec610)
