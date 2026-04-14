@@ -608,14 +608,51 @@ Some developers automatically upgrade all dependencies to the latest versions as
 > ```bash
 > $ npm update
 > $ npx npm-check-updates -u
+> $ pnpm update
+> $ yarn up
+> $ bun update
 > ```
 
 > [!NOTE]
 > **How to implement?**
 > 
-> 1. Use controlled dependency management: `npx npm-check-updates --interactive`
-> 2. Use [Snyk Automated Dependency Update PRs](https://docs.snyk.io/scan-with-snyk/pull-requests/snyk-pull-or-merge-requests/upgrade-dependencies-with-automatic-prs-upgrade-prs/upgrade-open-source-dependencies-with-automatic-prs)
-> 3. Use [Dependabot Dependency Update PRs](https://docs.github.com/en/code-security/getting-started/dependabot-quickstart-guide)
+> 1. Use controlled dependency management with interactive workflows:
+> 
+>    When available, native interactive upgrade features in package managers (or trusted ecosystem tools) allow you to review dependency updates before applying them, reducing the need for additional tooling and minimizing the attack surface:
+> 
+>    **npm (via npm-check-updates)**:
+>    ```bash
+>    npx npm-check-updates --interactive
+>    ```
+>    Reference: https://github.com/raineorshine/npm-check-updates#interactive-mode
+> 
+>    **pnpm**:
+>    ```bash
+>    pnpm update --interactive
+>    ```
+>    Reference: https://pnpm.io/cli/update#--interactive--i
+> 
+>    **Yarn**:
+>    ```bash
+>    yarn upgrade-interactive
+>    ```
+>    Reference: https://yarnpkg.com/cli/upgrade-interactive
+> 
+>    **Bun**:
+>    ```bash
+>    bun update --interactive
+>    ```
+>    Reference: https://bun.com/docs/pm/cli/update#interactive
+> 
+> 2. Use automated dependency update tools with review workflows:
+>    - [Snyk Automated Dependency Update PRs](https://docs.snyk.io/scan-with-snyk/pull-requests/snyk-pull-or-merge-requests/upgrade-dependencies-with-automatic-prs-upgrade-prs/upgrade-open-source-dependencies-with-automatic-prs)
+>    - [Dependabot Dependency Update PRs](https://docs.github.com/en/code-security/getting-started/dependabot-quickstart-guide)
+
+### Additional considerations
+
+- Prefer built-in package manager capabilities when possible to reduce reliance on third-party tooling.
+- Always review changelogs and release notes before upgrading dependencies.
+- Test upgrades in isolated environments before merging into production branches.
 
 ---
 
