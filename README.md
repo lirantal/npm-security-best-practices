@@ -10,7 +10,7 @@
 <!-- Shields -->
 <p align="center">
  <img src="https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg" alt="Awesome" />
- <img src="https://badgen.net/badge/total%20best%20practices/16/blue" alt="npm security best practices" />
+ <img src="https://badgen.net/badge/total%20best%20practices/17/blue" alt="npm security best practices" />
  <img src="https://badgen.net/badge/Last%20Update/Apr%2010/green" />
  <a href="https://www.github.com/lirantal/nodejs-cli-apps-best-practices" target="_blank">
   <img src="https://badgen.net/badge/npm/Security Best Practices/purple" alt="npm Security Best Practices"/>
@@ -40,43 +40,45 @@
   - 1.2. [Bun disable post-install scripts](#12-bun-disable-post-install-scripts)
   - 1.3. [Run the scripts you need](#13-run-the-scripts-you-need) 
   - 1.4. [pnpm trust policy](#14-pnpm-trust-policy)
-- 2 [Install with Cooldown](#2-install-with-cooldown)
-  - 2.1. [npm / pnpm / Bun / Yarn minimumReleaseAge cooldown](#21-npm--pnpm--bun--yarn-minimumreleaseage-cooldown)
-  - 2.2. [Snyk automated dependency upgrades with cooldown](#22-snyk-automated-dependency-upgrades-with-cooldown)
-  - 2.3. [Dependabot automated dependency upgrades with cooldown](#23-dependabot-automated-dependency-upgrades-with-cooldown)
-  - 2.4. [Renovate bot automated dependency upgrades with cooldown](#24-renovate-bot-automated-dependency-upgrades-with-cooldown)
-- 3 [Harden package installs with security tools](#3-harden-package-installs-with-security-tools)
-  - 3.1. [Use npq for hardening package installs](#31-use-npq-for-hardening-package-installs)
-  - 3.2. [Use Socket Firewall (sfw) for blocking malicious packages](#32-use-socket-firewall-sfw-for-blocking-malicious-packages)
-- 4 [Prevent npm lockfile injection](#4-prevent-npm-lockfile-injection)
-- 5 [Use npm ci](#5-use-npm-ci)
-- 6 [Avoid blind npm package upgrades](#6-avoid-blind-npm-package-upgrades)
-- 7 [Harden npx execution](#7-harden-npx-execution)
+- 2 [Block Git-Based Dependencies](#2-block-git-based-dependencies)
+  - 2.1. [pnpm block exotic subdependencies](#21-pnpm-block-exotic-subdependencies)
+- 3 [Install with Cooldown](#3-install-with-cooldown)
+  - 3.1. [npm / pnpm / Bun / Yarn minimumReleaseAge cooldown](#31-npm--pnpm--bun--yarn-minimumreleaseage-cooldown)
+  - 3.2. [Snyk automated dependency upgrades with cooldown](#32-snyk-automated-dependency-upgrades-with-cooldown)
+  - 3.3. [Dependabot automated dependency upgrades with cooldown](#33-dependabot-automated-dependency-upgrades-with-cooldown)
+  - 3.4. [Renovate bot automated dependency upgrades with cooldown](#34-renovate-bot-automated-dependency-upgrades-with-cooldown)
+- 4 [Harden package installs with security tools](#4-harden-package-installs-with-security-tools)
+  - 4.1. [Use npq for hardening package installs](#41-use-npq-for-hardening-package-installs)
+  - 4.2. [Use Socket Firewall (sfw) for blocking malicious packages](#42-use-socket-firewall-sfw-for-blocking-malicious-packages)
+- 5 [Prevent npm lockfile injection](#5-prevent-npm-lockfile-injection)
+- 6 [Use npm ci](#6-use-npm-ci)
+- 7 [Avoid blind npm package upgrades](#7-avoid-blind-npm-package-upgrades)
+- 8 [Harden npx execution](#8-harden-npx-execution)
 
 **Secure Local Development Best Practices:**
 
-- 8 [No plaintext secrets in .env files](#8-no-plaintext-secrets-in-env-files)
-- 9 [Work in Dev Containers](#9-work-in-dev-containers)
+- 9 [No plaintext secrets in .env files](#9-no-plaintext-secrets-in-env-files)
+- 10 [Work in Dev Containers](#10-work-in-dev-containers)
 
 **npm Maintainer Security Best Practices:**
 
-- 10 [Enable 2FA for npm accounts](#10-enable-2fa-for-npm-accounts)
-- 11 [Publish with Provenance Attestations](#11-publish-with-provenance-attestations)
-- 12 [Publish with OIDC](#12-publish-with-oidc)
-- 13 [Reduce your package dependency tree](#13-reduce-your-package-dependency-tree)
+- 11 [Enable 2FA for npm accounts](#11-enable-2fa-for-npm-accounts)
+- 12 [Publish with Provenance Attestations](#12-publish-with-provenance-attestations)
+- 13 [Publish with OIDC](#13-publish-with-oidc)
+- 14 [Reduce your package dependency tree](#14-reduce-your-package-dependency-tree)
 
 **npm Package Health Best Practices:**
 
-- 14 [Consult the Snyk Security Database for package health](#14-consult-the-snyk-security-database-for-package-health)
-- 15 [Do not trust the official npmjs.org registry](#15-do-not-trust-the-official-npmjsorg-registry)
-- 16 [Prevent dependency confusion attacks](#15-prevent-dependency-confusion-attacks)
+- 15 [Consult the Snyk Security Database for package health](#15-consult-the-snyk-security-database-for-package-health)
+- 16 [Do not trust the official npmjs.org registry](#16-do-not-trust-the-official-npmjsorg-registry)
+- 17 [Prevent dependency confusion attacks](#17-prevent-dependency-confusion-attacks)
 
 ---
 
 ## 1. Disable Post-Install Scripts
 
 > [!WARNING]
-> Post-install scripts are a common and recurring attack vector for supply chain attacks. Additionally, even with `--ignore-scripts` set, a git-based dependency URL (e.g. `"pkg": "git+https://github.com/org/pkg"`) can ship its own `.npmrc` file that re-enables lifecycle scripts, silently bypassing the flag. Use `--allow-git=none` (npm CLI 11.10.0+) alongside `--ignore-scripts` to fully close this attack vector.
+> Post-install scripts are a common and recurring attack vector for supply chain attacks.
 
 Recent attacks like Shai-Hulud[^1], Nx[^2] and long-standing attacks like event-stream[^3] have all leveraged npm `postinstall` scripts to execute arbitrary code on a developer's machine during package installation in order to exfiltrate sensitive data, trigger a worm-like propagation, or perform other malicious activities.
 
@@ -88,18 +90,15 @@ By disabling post-install scripts, you can mitigate the risk of such attacks by 
 > [!NOTE]
 > **How to implement?**
 > 
-> It is *highly recommended* in your global configuration to set npm's `ignore-scripts` and `allow-git` configurations to disable all post-install scripts for all projects on your machine:
+> It is *highly recommended* in your global configuration to set npm's `ignore-scripts` configuration to disable all post-install scripts for all projects on your machine:
 > ```bash
 > $ npm config set ignore-scripts true
-> $ npm config set allow-git none
 > ```
 >
 > Or disable npm's post-install scripts when performing ad-hoc package install using the command line:
 > ```bash
-> $ npm install --ignore-scripts --allow-git=none <package-name>
+> $ npm install --ignore-scripts <package-name>
 > ```
->
-> See the [official npm documentation for `--allow-git`](https://docs.npmjs.com/cli/v11/commands/npm-install#allow-git) for more details.
 
 ### 1.1. pnpm disable post-install scripts
 
@@ -183,7 +182,55 @@ When `trustPolicy: no-downgrade` is enabled, if any previously published version
 
 ---
 
-## 2. Install with Cooldown
+## 2. Block Git-Based Dependencies
+
+> [!WARNING]
+> A dependency declared as a git URL (e.g. `"pkg": "git+https://github.com/org/pkg"`) bypasses registry security controls entirely. The fetched repository can ship its own `.npmrc` that re-enables lifecycle scripts — silently undoing `--ignore-scripts` — and the code is never scanned by registry-side malware checks. Even with post-install scripts disabled, git-sourced dependencies can introduce unreviewed, unversioned code into your project.
+
+Dependencies should be resolved from the npm registry using semver ranges, where packages are subject to registry security scanning, provenance attestations, and signature verification. Git-based dependency URLs sidestep all of these protections: the code comes directly from a repository, can change at any time (branches, tags, and even commits can be force-pushed), and can include files like `.npmrc` that alter the behaviour of the package manager itself.
+
+> [!TIP]
+> **Security Best Practice**: Configure your package manager to block git-based dependency URLs so that all packages are resolved from the registry with full security controls applied.
+
+> [!NOTE]
+> **How to implement?**
+>
+> Set npm's `allow-git` configuration (npm CLI 11.10.0+) to prevent git-based dependency resolution:
+> ```bash
+> $ npm config set allow-git none
+> ```
+>
+> Or use the flag for ad-hoc installs:
+> ```bash
+> $ npm install --allow-git=none <package-name>
+> ```
+>
+> The `allow-git` setting accepts three values:
+> - `all` (default) — allows any git dependency
+> - `none` — blocks all git dependencies
+> - `root` — allows git dependencies only in your project's root `package.json`
+>
+> See the [official npm documentation for `--allow-git`](https://docs.npmjs.com/cli/v11/commands/npm-install#allow-git) for more details.
+
+### 2.1. pnpm block exotic subdependencies
+
+pnpm does not have a direct equivalent to npm's `allow-git` setting that blocks all git dependencies outright. However, pnpm 10.26+ provides `blockExoticSubdeps` to prevent *transitive* dependencies from pulling code from git repositories or raw tarball URLs — sources that bypass registry security scanning.
+
+> [!NOTE]
+> **How to implement?**
+>
+> In `pnpm-workspace.yaml`:
+> ```yaml
+> blockExoticSubdeps: true
+> ```
+>
+> When enabled, only direct dependencies (those declared in your root `package.json`) are allowed to use exotic sources such as git repositories or tarball URLs. All transitive dependencies must be resolved from the configured registry, local file paths, workspace links, or trusted GitHub repositories.
+
+For full details on `blockExoticSubdeps`, see also [section 5 — Prevent npm lockfile injection](#5-prevent-npm-lockfile-injection).
+
+---
+
+## 3. Install with Cooldown
 
 > [!WARNING]
 > Newly released packages and versions may contain malicious code that are often-times quickly picked up by the community in matter of hours or days and subsequently unpublished.
@@ -213,7 +260,7 @@ Attackers build on the npm versioning and publishing model which prefers and res
 >
 > Note: The `--before` approach requires manual date management and isn't ideal for automated workflows due to hardcoded dates. Prefer `min-release-age` for a persistent configuration.
 
-### 2.1. npm / pnpm / Bun / Yarn minimumReleaseAge cooldown
+### 3.1. npm / pnpm / Bun / Yarn minimumReleaseAge cooldown
 
 Configure npm, pnpm, Bun, or Yarn to delay package installations by setting a minimum release age in your package manager's configuration file.
 
@@ -267,14 +314,14 @@ npmPreapprovedPackages:
 
 These configurations prevent package managers from installing any package version that was published less than the specified time period ago.
 
-### 2.2. Snyk automated dependency upgrades with cooldown
+### 3.2. Snyk automated dependency upgrades with cooldown
 
 [Snyk automatically includes a built-in cooldown period](https://docs.snyk.io/developer-tools/scm-integrations/deployment-recommendations#how-automatic-upgrade-prs-work) for dependency upgrade Pull Requests. Snyk does not recommend upgrades to versions that are less than 21 days old to avoid:
 
 - Versions that introduce functional bugs and are subsequently unpublished
 - Versions released from compromised accounts where the owner has lost control to malicious actors
 
-### 2.3. Dependabot automated dependency upgrades with cooldown
+### 3.3. Dependabot automated dependency upgrades with cooldown
 
 Dependabot has a [`cooldown`](https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference#cooldown-) configuration option, for setting the number of days before a specific version of a dependency will be updated:
 
@@ -295,7 +342,7 @@ updates:
       semver-patch-days: 7
 ```
 
-### 2.4. Renovate bot automated dependency upgrades with cooldown
+### 3.4. Renovate bot automated dependency upgrades with cooldown
 
 Renovate bot has a [`minimumReleaseAge`](https://docs.renovatebot.com/configuration-options/#minimumreleaseage) config option, for setting the minimum age of each package version before a pull request will be created for it:
 
@@ -303,7 +350,7 @@ Renovate bot has a [`minimumReleaseAge`](https://docs.renovatebot.com/configurat
 
 ---
 
-## 3. Harden package installs with security tools
+## 4. Harden package installs with security tools
 
 > [!WARNING]
 > You should never install npm packages without properly auditing their package health and security signals.
@@ -312,7 +359,7 @@ How do you know if an npm package is safe to install? maybe it was just publishe
 
 Installing a new ad-hoc npm package can expose your system to supply chain attacks. Many attacks compromised trusted and popular npm packages, exploit typosquatting, or introduce malicious code in pre/post-install scripts that execute during the installation process.
 
-### 3.1. Use npq for hardening package installs
+### 4.1. Use npq for hardening package installs
 
 > [!TIP]
 > **Security Best Practice**: Use [npq](https://github.com/lirantal/npq) as a proactive security control that audits npm packages before installation, providing comprehensive security checks, package health signals, and interactive warnings for potentially dangerous or high-risk packages.
@@ -384,7 +431,7 @@ Disable specific security marshalls when needed:
 $ MARSHALL_DISABLE_SNYK=1 npq install express
 ```
 
-### 3.2. Use Socket Firewall (sfw) for blocking malicious packages
+### 4.2. Use Socket Firewall (sfw) for blocking malicious packages
 
 > [!TIP]
 > **Security Best Practice**: Use [Socket Firewall (`sfw`)](https://socket.dev/blog/introducing-socket-firewall) as a real-time firewall that intercepts supported package manager commands and blocks packages flagged for malicious behavior, using Socket's deep package analysis and threat intelligence.
@@ -439,7 +486,7 @@ Both `npq` and `sfw` intercept package installations and provide security warnin
 
 ---
 
-## 4. Prevent npm lockfile injection
+## 5. Prevent npm lockfile injection
 
 > [!WARNING]
 > Malicious actors can inject compromised packages into your lockfiles through pull requests, potentially compromising your entire application during the next installation.
@@ -525,11 +572,11 @@ Bun uses its own lockfile format - either `bun.lock` (text-based, default since 
 > If you are using Bun as your package manager, `lockfile-lint` is not currently available for validating `bun.lock` or `bun.lockb` files. Users should:
 > - Monitor the [lockfile-lint GitHub repository](https://github.com/lirantal/lockfile-lint) for future Bun support
 > - Check for alternative security tools that may support Bun lockfiles
-> - Follow Bun's security best practices, including using `minimumReleaseAge` cooldown (see [section 2.3](#23-bun-minimumreleaseage-cooldown))
+> - Follow Bun's security best practices, including using `minimumReleaseAge` cooldown (see [section 3.1](#31-npm--pnpm--bun--yarn-minimumreleaseage-cooldown))
 
 ---
 
-## 5. Use npm ci
+## 6. Use npm ci
 
 > [!WARNING]
 > Using `npm install` in production can lead to inconsistent installations when lockfiles and package.json files are out of sync, potentially introducing unintended package versions and security vulnerabilities that are resolved during install-time.
@@ -592,7 +639,7 @@ Ensure proper lockfile management across your development workflow:
 
 ---
 
-## 6. Avoid blind npm package upgrades
+## 7. Avoid blind npm package upgrades
 
 > [!WARNING]
 > Blindly upgrading all dependencies to their latest versions can expose your application to security vulnerabilities, dependency confusion attacks, and malicious packages released from compromised accounts.
@@ -619,7 +666,7 @@ Some developers automatically upgrade all dependencies to the latest versions as
 
 ---
 
-## 7. Harden npx execution
+## 8. Harden npx execution
 
 > [!WARNING]
 > `npx` resolves, downloads, and executes packages from the npm registry in a single step — with no lockfile, no hash verification, and no cooldown. Every invocation can silently pull in a newly published, potentially malicious version of a package. The Axios supply chain compromise[^7] demonstrated this risk when a compromised maintainer account published backdoored versions of a package with 70+ million weekly downloads, delivering a cross-platform RAT through a malicious post-install dependency.
@@ -680,7 +727,7 @@ To update your pre-vetted packages, explicitly run `npm update` in the workspace
 
 ---
 
-## 8. No plaintext secrets in .env files
+## 9. No plaintext secrets in .env files
 
 > [!WARNING]
 > Storing secrets in plaintext environment variables or `.env` files creates a significant security risk, making sensitive data easily accessible to attackers who successfully launch supply chain attacks or gain access to your system.
@@ -725,7 +772,7 @@ Even if `.env` files are not committed to version control, they remain vulnerabl
 
 ---
 
-## 9. Work in Dev Containers
+## 10. Work in Dev Containers
 
 > [!WARNING]
 > Running npm packages directly on your host development machine exposes your entire system to potential malware, allowing malicious packages to access sensitive files, spawning agentic coding CLIs, agent environment variables, and system resources.
@@ -772,7 +819,7 @@ Even if `.env` files are not committed to version control, they remain vulnerabl
 
 ---
 
-## 10. Enable 2FA for npm accounts
+## 11. Enable 2FA for npm accounts
 
 > [!WARNING]
 > npm accounts without two-factor authentication are vulnerable to credential theft and account takeover attacks, potentially allowing malicious actors to publish compromised versions of your packages.
@@ -797,7 +844,7 @@ The eslint-scope[^6] incident in 2018 demonstrated the risks of compromised npm 
 
 ---
 
-## 11. Publish with Provenance Attestations
+## 12. Publish with Provenance Attestations
 
 > [!WARNING]
 > Packages without provenance attestations cannot be verified for their build origin or authenticity, making it difficult for users to trust the integrity of your published packages in order to determine if they were built from the intended source code on GitHub or by malicious actors who may have compromised your npm account.
@@ -823,7 +870,7 @@ Provenance statements provide cryptographic proof of where and how your packages
 
 ---
 
-## 12. Publish with OIDC
+## 13. Publish with OIDC
 
 > [!WARNING]
 > Long-lived npm tokens can be compromised, accidentally exposed in logs, or provide persistent unauthorized access if stolen, posing significant security risks to your packages.
@@ -850,7 +897,7 @@ Trusted publishing supports GitHub Actions and GitLab CI/CD, and automatically g
 
 ---
 
-## 13. Reduce your package dependency tree
+## 14. Reduce your package dependency tree
 
 > [!WARNING]
 > Each dependency in your package increases the attack surface and potential for supply chain vulnerabilities, as users inherit all transitive dependencies when installing your package.
@@ -879,7 +926,7 @@ Modern JavaScript provides many built-in capabilities that previously required e
 
 ---
 
-## 14. Consult the Snyk Security Database for package health
+## 15. Consult the Snyk Security Database for package health
 
 > [!WARNING]
 > Installing npm packages without reviewing their health signals can expose your project to unmaintained, insecure, or low-quality dependencies.
@@ -903,7 +950,7 @@ Package health encompasses more than just known vulnerabilities — it includes 
 
 ---
 
-## 15. Do not trust the official npmjs.org registry
+## 16. Do not trust the official npmjs.org registry
 
 > [!WARNING]
 > The npmjs.org website presents an incomplete and potentially misleading view of npm package metadata, which can create a false sense of security when evaluating packages.
@@ -929,11 +976,11 @@ Furthermore, it has been demonstrated that the source code displayed on the npmj
 > $ tar -tzf <package-name>-<version>.tgz
 > ```
 >
-> Use [npq](https://github.com/lirantal/npq) (see [section 3.1](#31-use-npq-for-hardening-package-installs)) to audit packages before installation, as it consults multiple security data sources beyond what npmjs.org displays.
+> Use [npq](https://github.com/lirantal/npq) (see [section 4.1](#41-use-npq-for-hardening-package-installs)) to audit packages before installation, as it consults multiple security data sources beyond what npmjs.org displays.
 
 ---
 
-## 16. Prevent dependency confusion attacks
+## 17. Prevent dependency confusion attacks
 
 > [!WARNING]
 > If your organisation uses a private npm registry alongside the public npmjs.org registry, an attacker can publish a same-named package to the public registry with a higher version number, causing your package manager to install the malicious public version instead of your internal package.
@@ -962,7 +1009,7 @@ This attack remains viable because npm has no protocol-level mechanism linking p
 >
 > This ensures that `@yourcompany/*` packages are only ever resolved from your private registry, while all other packages resolve from the public registry as normal.
 >
-> **Important:** Only put registry URLs in the committed `.npmrc`. Never commit authentication tokens — keep credentials in a user-level `~/.npmrc` or inject them via environment variables (e.g. `NPM_TOKEN`) in CI. See [section 7](#7-no-plaintext-secrets-in-env-files) for broader guidance on secrets management.
+> **Important:** Only put registry URLs in the committed `.npmrc`. Never commit authentication tokens — keep credentials in a user-level `~/.npmrc` or inject them via environment variables (e.g. `NPM_TOKEN`) in CI. See [section 9](#9-no-plaintext-secrets-in-env-files) for broader guidance on secrets management.
 
 ### Why scoped names are essential
 
@@ -989,8 +1036,8 @@ npmScopes:
 ### Additional mitigations
 
 - **Claim your internal package names on the public registry**: Publish placeholder packages to npmjs.org for any unscoped internal names you cannot immediately migrate to scoped names.
-- **Use `lockfile-lint`** (see [section 4](#4-prevent-npm-lockfile-injection)) to verify that resolved package URLs point to expected registries.
-- **Enable `blockExoticSubdeps`** in pnpm (see [section 4](#4-prevent-npm-lockfile-injection)) to prevent transitive dependencies from pulling packages from unexpected sources.
+- **Use `lockfile-lint`** (see [section 5](#5-prevent-npm-lockfile-injection)) to verify that resolved package URLs point to expected registries.
+- **Enable `blockExoticSubdeps`** in pnpm (see [section 5](#5-prevent-npm-lockfile-injection)) to prevent transitive dependencies from pulling packages from unexpected sources.
 
 ---
 
