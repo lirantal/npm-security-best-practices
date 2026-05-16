@@ -31,6 +31,66 @@
 
 ---
 
+## TL;DR: ✨ Copy/Paste package manager config
+
+Expand below to access a quick copy/paste secure-by-default configuration for `npm` and `pnpm` package managers
+
+<details>
+  <summary>.npmrc</summary>
+
+```ini
+# npm security best practices
+# Source: https://github.com/lirantal/npm-security-best-practices
+
+# SECURITY: do not run any lifecycle scripts (postinstall) etc
+ignore-scripts=true
+
+# SECURITY: reject git-source dependencies (git+ssh:// etc)
+allow-git=none
+
+# SECURITY: block packages newer than 30 days
+min-release-age=30
+```
+
+</details>
+
+<details>
+  <summary>pnpm-workspace.yaml</summary>
+
+```yaml
+# npm security best practices
+# Source: https://github.com/lirantal/npm-security-best-practices
+
+# SECURITY: block packages newer than 30 days (43200 minutes)
+minimumReleaseAge: 43200
+
+# SECURITY: reject a version whose publishing trust signals regressed
+trustPolicy: no-downgrade
+
+# SECURITY: keep strict overrides only when necessary and vetted
+# trustPolicyExclude:
+#   - 'chokidar@4.0.3'
+#   - 'webpack@4.47.0 || 5.102.1'
+
+# SECURITY: pnpm blocks install scripts by default, enabled explicitly for:
+allowBuilds:
+  esbuild: true
+  rolldown: true
+  unrs-resolver: true
+
+# SECURITY: fail the install if a dependency wants to run a build
+# script that isn't in the allow-list above
+strictDepBuilds: true
+
+# SECURITY: reject dependencies sourced from git URLs
+blockExoticSubdeps: true
+```
+
+</details>
+
+
+---
+
 ## Table of Contents
 
 **npm Security Best Practices:**
