@@ -843,7 +843,7 @@ Even if `.env` files are not committed to version control, they remain vulnerabl
 > **Security Best Practice**: Use dev containers to isolate your project's local development workflows from your host system so that npm package execution and other project development practices are limiting the potential impact of supply chain attacks and malicious package behavior.
 
 > [!NOTE]
-> **How to implement?**
+> **How to implement per project?**
 > 
 > Step 1. Create a `.devcontainer/devcontainer.json` file in your project:
 > ```json
@@ -858,6 +858,11 @@ Even if `.env` files are not committed to version control, they remain vulnerabl
 > ```
 >
 > Step 2. Use VS Code to open your project in the dev container
+
+> [!NOTE]
+> **How to implement globaly?**
+> 
+> Follow this guide to create a persistent, system-wide dev container to open all your projects in it: [zwyx.dev/blog/docker-dev](https://zwyx.dev/blog/docker-dev)
 
 ### Follow-up resources
 
