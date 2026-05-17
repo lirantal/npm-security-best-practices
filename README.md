@@ -1101,6 +1101,10 @@ npmScopes:
 
 ---
 
+## Contributing
+
+Please consult [CONTRIBUTING](./CONTRIBUTING.md) for guidelines on contributing to this project.
+
 ## Author
 
 **npm Security Best Practices** © [Liran Tal](https://github.com/lirantal), Released under [Apache 2.0](./LICENSE) License.
